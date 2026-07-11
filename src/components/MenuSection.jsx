@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MENU, fmt } from '../data/menu.js'
 import { Monogram } from './Logo.jsx'
 
@@ -21,8 +21,22 @@ function Item({ item }) {
 }
 
 export default function MenuSection() {
-  const [active, setActive] = useState(MENU[0].id)
-  const cat = MENU.find((c) => c.id === active)
+  const [activeId, setActiveId] = useState(null)
+  const cat = activeId ? MENU.find((c) => c.id === activeId) : null
+
+  // Fermeture par Échap + blocage du scroll de fond quand le panneau est ouvert.
+  useEffect(() => {
+    if (!cat) return
+    const onKey = (e) => {
+      if (e.key === 'Escape') setActiveId(null)
+    }
+    document.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = ''
+    }
+  }, [cat])
 
   return (
     <section className="menu" id="menu">
@@ -37,28 +51,54 @@ export default function MenuSection() {
           <button
             key={c.id}
             role="tab"
-            aria-selected={c.id === active}
-            className={`chip ${c.id === active ? 'chip--active' : ''}`}
-            onClick={() => setActive(c.id)}
+            aria-selected={c.id === activeId}
+            className={`chip ${c.id === activeId ? 'chip--active' : ''}`}
+            onClick={() => setActiveId(c.id)}
           >
             {c.label}
           </button>
         ))}
       </div>
 
-      {/* key force le remount pour rejouer l'animation d'entrée à chaque changement */}
-      <div className="menu__panel" key={cat.id}>
-        {cat.sections.map((sec) => (
-          <div className="menu__group" key={sec.title || cat.label}>
-            {sec.title && <h3 className="bubble-title">{sec.title}</h3>}
-            <ul className="menu__list">
-              {sec.items.map((item, i) => (
-                <Item item={item} key={`${item.name}-${i}`} />
+      <p className="menu__hint reveal">Cliquez sur une catégorie pour voir les plats.</p>
+
+      {cat && (
+        <div className="menu-overlay" onClick={() => setActiveId(null)}>
+          <div
+            className="menu-overlay__panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Catégorie ${cat.label}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="menu-overlay__head">
+              <div className="menu-overlay__title">
+                <Monogram size={26} />
+                <h3>{cat.label}</h3>
+              </div>
+              <button
+                className="menu-overlay__close"
+                aria-label="Fermer"
+                onClick={() => setActiveId(null)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="menu-overlay__body">
+              {cat.sections.map((sec) => (
+                <div className="menu__group" key={sec.title || cat.label}>
+                  {sec.title && <h3 className="bubble-title">{sec.title}</h3>}
+                  <ul className="menu__list">
+                    {sec.items.map((item, i) => (
+                      <Item item={item} key={`${item.name}-${i}`} />
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </section>
   )
 }
