@@ -392,9 +392,9 @@ section { padding: clamp(4.5rem, 9vw, 7rem) clamp(1.2rem, 5vw, 3rem); }
     linear-gradient(170deg, var(--teal-dark) 0%, var(--teal-deep) 100%);
   color: var(--cream-soft);
 }
-.contact__grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.3rem; max-width: 1020px; margin: 0 auto;
+.contact__cards {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.3rem; max-width: 640px; margin: 0 auto;
 }
 .contact-card {
   background: rgba(250, 245, 232, 0.09);
@@ -420,6 +420,44 @@ section { padding: clamp(4.5rem, 9vw, 7rem) clamp(1.2rem, 5vw, 3rem); }
   transition: border-color 0.25s; overflow-wrap: anywhere;
 }
 .contact-card a:hover { border-color: var(--cream); }
+
+/* contacts rapides — boutons ronds */
+.contact__socials {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 2.4rem 3rem; max-width: 760px; margin: 3rem auto 0;
+}
+.social-round {
+  display: flex; flex-direction: column; align-items: center; gap: 0.55rem;
+  text-decoration: none; color: var(--cream-soft);
+  width: 150px; text-align: center;
+}
+.social-round__circle {
+  width: 74px; height: 74px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--cream); color: var(--teal-deep);
+  border: 2px solid transparent;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
+  transition: transform 0.3s var(--ease), background 0.3s, color 0.3s, box-shadow 0.3s;
+}
+.social-round:hover .social-round__circle {
+  transform: translateY(-6px) scale(1.05);
+  background: var(--neon); color: var(--cream-soft);
+  box-shadow: 0 14px 34px rgba(199, 125, 255, 0.4);
+}
+.social-round__label {
+  font-family: var(--font-head); font-weight: 500; font-size: 0.85rem;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--cream);
+}
+.social-round__value {
+  font-size: 0.76rem; color: rgba(250, 245, 232, 0.7);
+  overflow-wrap: anywhere; line-height: 1.4;
+  transition: color 0.3s;
+}
+.social-round:hover .social-round__value { color: var(--cream-soft); }
+.social-round:focus-visible { outline: none; }
+.social-round:focus-visible .social-round__circle {
+  outline: 3px solid var(--neon); outline-offset: 3px;
+}
 
 /* ===================== FOOTER ===================== */
 .footer {

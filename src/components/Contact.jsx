@@ -1,6 +1,7 @@
 import { Icon } from './Icons.jsx'
 
-const CARDS = [
+// Cartes info (conservées telles quelles) : adresse + horaires.
+const INFO_CARDS = [
   {
     icon: 'pin',
     title: 'Adresse',
@@ -22,33 +23,35 @@ const CARDS = [
     title: 'Horaires',
     body: <p>Tous les jours<br />7h00 – 23h00</p>,
   },
+]
+
+// Contacts rapides — rendus en boutons ronds.
+const SOCIALS = [
   {
     icon: 'phone',
-    title: 'Téléphone',
-    body: <a href="tel:+21693209930">+216 93 209 930</a>,
+    label: 'Téléphone',
+    value: '+216 93 209 930',
+    href: 'tel:+21693209930',
   },
   {
     icon: 'instagram',
-    title: 'Instagram',
-    body: (
-      <a href="https://www.instagram.com/mornaco.coffee.lounge/" target="_blank" rel="noopener noreferrer">
-        @mornaco.coffee.lounge
-      </a>
-    ),
+    label: 'Instagram',
+    value: '@mornaco.coffee.lounge',
+    href: 'https://www.instagram.com/mornaco.coffee.lounge/',
+    external: true,
   },
   {
     icon: 'facebook',
-    title: 'Facebook',
-    body: (
-      <a href="https://www.facebook.com/Mornaco.coffee.lounge" target="_blank" rel="noopener noreferrer">
-        Mornaco Coffee Lounge
-      </a>
-    ),
+    label: 'Facebook',
+    value: 'Mornaco Coffee Lounge',
+    href: 'https://www.facebook.com/Mornaco.coffee.lounge',
+    external: true,
   },
   {
     icon: 'mail',
-    title: 'E-mail',
-    body: <a href="mailto:mornacocafelounge@gmail.com">mornacocafelounge@gmail.com</a>,
+    label: 'E-mail',
+    value: 'mornacocafelounge@gmail.com',
+    href: 'mailto:mornacocafelounge@gmail.com',
   },
 ]
 
@@ -59,8 +62,9 @@ export default function Contact() {
         <span className="bubble-label">Venez nous voir</span>
         <h2>Où nous trouver</h2>
       </div>
-      <div className="contact__grid">
-        {CARDS.map((c, i) => (
+
+      <div className="contact__cards">
+        {INFO_CARDS.map((c, i) => (
           <div className="contact-card reveal" style={{ transitionDelay: `${i * 70}ms` }} key={c.title}>
             <div className="contact-card__icon">
               <Icon name={c.icon} size={26} />
@@ -68,6 +72,24 @@ export default function Contact() {
             <h3>{c.title}</h3>
             {c.body}
           </div>
+        ))}
+      </div>
+
+      <div className="contact__socials reveal">
+        {SOCIALS.map((s) => (
+          <a
+            className="social-round"
+            key={s.label}
+            href={s.href}
+            aria-label={`${s.label} — ${s.value}`}
+            {...(s.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          >
+            <span className="social-round__circle">
+              <Icon name={s.icon} size={26} />
+            </span>
+            <span className="social-round__label">{s.label}</span>
+            <span className="social-round__value">{s.value}</span>
+          </a>
         ))}
       </div>
     </section>
