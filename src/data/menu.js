@@ -9,6 +9,7 @@ export const MENU = [
   {
     id: 'cafes',
     label: 'Cafés',
+    icon: 'cup',
     sections: [
       {
         title: 'Café',
@@ -62,6 +63,7 @@ export const MENU = [
   {
     id: 'thes',
     label: 'Thés',
+    icon: 'tea',
     sections: [
       {
         items: [
@@ -79,6 +81,7 @@ export const MENU = [
   {
     id: 'frappes',
     label: 'Frappés & Milkshakes',
+    icon: 'shake',
     sections: [
       {
         title: 'Frappuccino',
@@ -110,6 +113,7 @@ export const MENU = [
   {
     id: 'glaces',
     label: 'Glaces & Desserts',
+    icon: 'icecream',
     sections: [
       {
         title: 'Glaces',
@@ -147,6 +151,7 @@ export const MENU = [
   {
     id: 'jus',
     label: 'Jus & Cocktails',
+    icon: 'cocktail',
     sections: [
       {
         title: 'Jus Frais',
@@ -197,6 +202,7 @@ export const MENU = [
   {
     id: 'smoothies',
     label: 'Smoothies & Mojitos',
+    icon: 'mojito',
     sections: [
       {
         title: 'Smoothies',
@@ -236,6 +242,7 @@ export const MENU = [
   {
     id: 'crepes',
     label: 'Crêpes & Gaufres',
+    icon: 'waffle',
     sections: [
       {
         title: 'Crêpes Sucrées',
@@ -292,6 +299,7 @@ export const MENU = [
   {
     id: 'snacks',
     label: 'Sandwichs & Burgers',
+    icon: 'burger',
     sections: [
       {
         title: 'Sandwichs',
@@ -337,6 +345,7 @@ export const MENU = [
   {
     id: 'pizzas',
     label: 'Pizzas & Entrées',
+    icon: 'pizza',
     sections: [
       {
         title: 'Pizzas Large',
@@ -385,6 +394,7 @@ export const MENU = [
   {
     id: 'pates',
     label: 'Pâtes & Plats',
+    icon: 'plate',
     sections: [
       {
         title: 'Pâtes',
@@ -427,6 +437,7 @@ export const MENU = [
   {
     id: 'boissons',
     label: 'Boissons & Suppléments',
+    icon: 'bottle',
     sections: [
       {
         title: 'Boissons',

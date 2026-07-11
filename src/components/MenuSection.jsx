@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { MENU, fmt } from '../data/menu.js'
 import { Monogram } from './Logo.jsx'
+import { Icon } from './Icons.jsx'
+
+const countItems = (cat) => cat.sections.reduce((n, s) => n + s.items.length, 0)
 
 function Item({ item }) {
   return (
@@ -46,16 +49,19 @@ export default function MenuSection() {
         <p>Prix en dinars tunisiens — service en salle &amp; terrasse.</p>
       </div>
 
-      <div className="menu__tabs reveal" role="tablist" aria-label="Catégories du menu">
+      <div className="menu__cats reveal" aria-label="Catégories du menu">
         {MENU.map((c) => (
           <button
             key={c.id}
-            role="tab"
-            aria-selected={c.id === activeId}
-            className={`chip ${c.id === activeId ? 'chip--active' : ''}`}
+            className={`cat-card ${c.id === activeId ? 'cat-card--active' : ''}`}
+            aria-haspopup="dialog"
             onClick={() => setActiveId(c.id)}
           >
-            {c.label}
+            <span className="cat-card__icon">
+              <Icon name={c.icon} size={32} />
+            </span>
+            <span className="cat-card__label">{c.label}</span>
+            <span className="cat-card__count">{countItems(c)} plats</span>
           </button>
         ))}
       </div>

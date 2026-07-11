@@ -135,4 +135,39 @@ const paths = {
       <path d="M13.5 18c.3-2.3 1.3-3.8 2.5-3.8 1.5 0 3 1.8 3 4.3" opacity="0.8" />
     </>
   ),
+  shake: (
+    <>
+      <path d="M7 8h10l-1 11a2 2 0 0 1-2 1.8h-4a2 2 0 0 1-2-1.8L7 8z" />
+      <path d="M7 8a5 5 0 0 1 10 0" />
+      <path d="M14 8V4l2-1.4" />
+      <path d="M8.6 13h6.8" opacity="0.7" />
+    </>
+  ),
+  icecream: (
+    <>
+      <path d="M7.3 11h9.4L12 21z" />
+      <path d="M7.3 11a4.7 4.7 0 0 1 9.4 0" />
+      <circle cx="12" cy="5.6" r="2.2" opacity="0.85" />
+      <path d="M9 15l6 0" opacity="0" />
+    </>
+  ),
+  waffle: (
+    <>
+      <rect x="4.5" y="4.5" width="15" height="15" rx="3.5" />
+      <path d="M9.3 4.7v14.6M14.7 4.7v14.6M4.7 9.3h14.6M4.7 14.7h14.6" opacity="0.65" />
+    </>
+  ),
+  plate: (
+    <>
+      <circle cx="12" cy="12" r="8" />
+      <circle cx="12" cy="12" r="4.4" opacity="0.55" />
+      <path d="M12 4v4M8.5 4.7l1.4 3.7M15.5 4.7l-1.4 3.7" opacity="0.5" />
+    </>
+  ),
+  bottle: (
+    <>
+      <path d="M10.3 3h3.4v1.8l-.4 2.2c1 .6 1.6 1.7 1.6 3V19a2 2 0 0 1-2 2h-1.8a2 2 0 0 1-2-2v-8.9c0-1.3.6-2.4 1.6-3l-.4-2.2V3z" />
+      <path d="M9.2 13h5.6" opacity="0.6" />
+    </>
+  ),
 }
