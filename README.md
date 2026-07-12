@@ -33,6 +33,26 @@ npm run build      # build de production dans dist/
 4. **Ambiance** — enseigne néon violette sur mur végétal (recréée en CSS), tables marbre.
 5. **Contact** — adresse, horaires, téléphone, Instagram, Facebook, e-mail.
 
+## Page admin (`/admin.html`)
+
+Reprise de l'admin BISOU (`MENU/admin.html`), recolorée à la palette MORNACO
+(turquoise/crème/encre, typos Fredoka + Nunito Sans + Jost). Fichier autonome :
+`public/admin.html`, servi tel quel par Vite/Vercel.
+
+Fonctionnalités : connexion (comptes admin/superadmin), suivi des commandes en
+temps réel (statuts en attente → en préparation → prêt → servi), stats + courbe
+de chiffre d'affaires (jour/semaine/mois), gestion des produits (prix,
+visibilité, incontournables, ajout/suppression), gestion des utilisateurs
+(superadmin).
+
+⚠ **Backend partagé pour l'instant** : l'admin pointe vers le MÊME Supabase que
+BISOU (`vfsfzdtbcdnxnzkinbbc.supabase.co` — mêmes comptes, mêmes commandes,
+mêmes produits). Quand une base « Mornaco » sera créée, remplacer
+`SUPABASE_URL`/`SUPABASE_KEY` dans `public/admin.html` et y recréer les
+fonctions RPC (`admin_login`, `admin_set_order_status`, `admin_product_save`,
+etc.) comme sur BISOU. Le site vitrine lui-même n'utilise pas encore cette base
+(pas de commande en ligne côté client).
+
 ## ⚠ À confirmer avec le client
 
 - **Horaires** (`src/components/Contact.jsx`) — « 7h00 – 23h00 » par défaut, non indiqués sur le menu.

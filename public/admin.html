@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MORNACO — Admin</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=Jost:wght@300;400;500&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --teal: #3cb9a0; --teal-dark: #2a9c86; --teal-deep: #14584b;
+      --cream: #f4e7c6; --sand-mid: #e2d5b0; --sand-dark: #ece0c2;
+      --paper: #faf5e8; --ink: #1c3049; --ink-soft: #5a6f83; --accent: #2a9c86;
+    }
+    body { font-family: 'Nunito Sans', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
+
+    /* ---- GATE ---- */
+    #admin-gate {
+      position: fixed; inset: 0; z-index: 9999;
+      background:
+        radial-gradient(120% 90% at 85% 0%, var(--teal-dark) 0%, transparent 55%),
+        linear-gradient(165deg, var(--teal) 0%, var(--teal-dark) 100%);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem;
+    }
+    .gate-spinner {
+      width: 28px; height: 28px; border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .gate-card {
+      background: #fff; border-radius: 22px;
+      padding: 2.6rem 2rem 2rem;
+      width: 100%; max-width: 370px;
+      display: flex; flex-direction: column; gap: 0.9rem;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(20, 88, 75, 0.35);
+    }
+    .gate-mono { margin: 0 auto -2px; color: var(--teal); }
+    .gate-logo { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 2rem; letter-spacing: 8px; text-indent: 8px; color: var(--teal-deep); }
+    .gate-title { font-family: 'Fredoka', sans-serif; font-weight: 500; color: var(--ink); font-size: 1.05rem; }
+    .gate-sub { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); margin-top: -3px; }
+
+    .gate-field { display: flex; flex-direction: column; gap: 4px; text-align: left; }
+    .gate-field label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); padding-left: 2px; }
+    .gate-input {
+      width: 100%; border: 1.5px solid var(--sand-mid); border-radius: 50px;
+      padding: 0.72rem 1.1rem; font-size: 0.88rem; outline: none;
+      font-family: 'Nunito Sans', sans-serif; color: var(--ink); background: var(--paper);
+      transition: border-color 0.2s;
+    }
+    .gate-input:focus { border-color: var(--teal); }
+    .gate-btn {
+      background: var(--teal); color: #fff; border: none; border-radius: 50px;
+      padding: 0.88rem; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px;
+      cursor: pointer; transition: background 0.2s; font-family: 'Nunito Sans', sans-serif;
+      margin-top: 2px;
+    }
+    .gate-btn:hover { background: var(--teal-dark); }
+    .gate-btn:active { transform: scale(0.98); }
+    .gate-err { font-size: 0.78rem; color: #c0392b; min-height: 1.1rem; }
+
+    /* ---- HEADER ---- */
+    header {
+      background: linear-gradient(170deg, var(--teal-dark) 0%, var(--teal-deep) 100%);
+      padding: 0 2rem; height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 10;
+      border-bottom: 1px solid rgba(244,231,198,0.25);
+    }
+    .admin-logo { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 1.15rem; color: var(--cream); letter-spacing: 5px; text-decoration: none; }
+    .admin-badge { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: rgba(244,231,198,0.7); }
+    .header-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #4caf50; animation: pulse 2s infinite; display: inline-block; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+    .header-user { font-size: 0.75rem; color: var(--cream); opacity: 0.9; }
+    .header-role-pill {
+      font-size: 0.62rem; padding: 2px 9px; border-radius: 10px;
+      text-transform: uppercase; letter-spacing: 1px;
+      background: rgba(244,231,198,0.18); color: var(--cream);
+    }
+    #order-count-badge { background: var(--cream); color: var(--teal-deep); font-size: 0.75rem; font-weight: 600; padding: 4px 12px; border-radius: 20px; }
+    .users-btn {
+      background: none; border: 1px solid rgba(244,231,198,0.4);
+      color: var(--cream); font-size: 0.72rem; padding: 5px 13px;
+      border-radius: 20px; cursor: pointer; transition: 0.2s;
+    }
+    .users-btn:hover { border-color: var(--cream); background: rgba(244,231,198,0.12); }
+    .clear-btn {
+      background: rgba(244,231,198,0.12); border: 1px solid rgba(244,231,198,0.3);
+      color: var(--cream); font-size: 0.75rem; padding: 6px 14px;
+      border-radius: 20px; cursor: pointer; transition: 0.2s;
+    }
+    .clear-btn:hover { background: rgba(244,231,198,0.22); }
+    .logout-btn {
+      background: none; border: 1px solid rgba(244,231,198,0.25);
+      color: rgba(244,231,198,0.7); font-size: 0.72rem; padding: 5px 12px;
+      border-radius: 20px; cursor: pointer; transition: 0.2s;
+    }
+    .logout-btn:hover { border-color: rgba(244,231,198,0.55); color: var(--cream); }
+
+    /* ---- STATS ---- */
+    .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; padding: 1.5rem 2rem; max-width: 1100px; margin: 0 auto; }
+    .stat-card { background: #fff; border: 1px solid rgba(60,185,160,0.22); border-radius: 16px; padding: 1.2rem 1.4rem; box-shadow: 0 4px 14px rgba(20,88,75,0.06); }
+    .stat-card .s-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); margin-bottom: 6px; }
+    .stat-card .s-value { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 1.8rem; color: var(--teal-deep); }
+    .stat-card .s-sub { font-size: 0.75rem; color: var(--ink-soft); margin-top: 2px; }
+    .stat-card.clickable { cursor: pointer; transition: box-shadow 0.2s, transform 0.15s; }
+    .stat-card.clickable:hover { box-shadow: 0 8px 24px rgba(20,88,75,0.16); transform: translateY(-2px); }
+
+    /* ---- FILTERS ---- */
+    .filters { display: flex; gap: 8px; padding: 0 2rem 1.2rem; max-width: 1100px; margin: 0 auto; flex-wrap: wrap; }
+    .filter-btn {
+      background: transparent; border: 1px solid var(--sand-mid);
+      color: var(--ink-soft); padding: 6px 18px; border-radius: 20px;
+      cursor: pointer; font-size: 0.78rem; transition: 0.2s; font-family: 'Nunito Sans', sans-serif;
+    }
+    .filter-btn:hover { border-color: var(--teal); color: var(--teal-dark); }
+    .filter-btn.active { background: var(--teal); color: #fff; border-color: var(--teal); }
+
+    /* ---- ORDERS ---- */
+    .orders-container { max-width: 1100px; margin: 0 auto; padding: 0 2rem 3rem; }
+    .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+    .order-card { background: #fff; border: 1px solid rgba(60,185,160,0.2); border-radius: 16px; overflow: hidden; transition: box-shadow 0.2s; }
+    .order-card:hover { box-shadow: 0 6px 22px rgba(20,88,75,0.12); }
+    .order-card.done { opacity: 0.55; }
+    .order-card.priority { border-left: 3px solid #4caf50; }
+    .order-card-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.2rem 0.8rem; border-bottom: 1px solid var(--sand-dark); }
+    .order-ref { font-family: 'Fredoka', sans-serif; font-weight: 500; font-size: 1rem; color: var(--teal-deep); }
+    .order-time { font-size: 0.75rem; color: var(--ink-soft); }
+    .status-pill { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.5px; padding: 4px 12px; border-radius: 20px; border: none; }
+    .status-pill.en-attente { background: #fff3e0; color: #e65100; }
+    .status-pill.en-preparation { background: #e3f2fd; color: #1565c0; }
+    .status-pill.pret { background: #e8f5e9; color: #2e7d32; }
+    .status-pill.servi { background: var(--sand-dark); color: var(--ink-soft); }
+    .phase-actions { display: grid; grid-template-columns: repeat(4,1fr); gap: 4px; padding: 0.2rem 1.2rem 1rem; }
+    .phase-btn {
+      font-size: 0.58rem; padding: 7px 3px; border-radius: 8px;
+      border: 1px solid var(--sand-mid); background: none; cursor: pointer;
+      color: var(--ink-soft); transition: 0.15s; font-family: 'Nunito Sans', sans-serif;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;
+    }
+    .phase-btn:not(.active):hover { border-color: var(--teal); color: var(--teal-dark); }
+    .phase-btn.active.en-attente    { background: #fff3e0; border-color: #e65100;          color: #e65100;          font-weight: 700; }
+    .phase-btn.active.en-preparation{ background: #e3f2fd; border-color: #1565c0;          color: #1565c0;          font-weight: 700; }
+    .phase-btn.active.pret          { background: #e8f5e9; border-color: #2e7d32;          color: #2e7d32;          font-weight: 700; }
+    .phase-btn.active.servi         { background: var(--sand-dark); border-color: var(--ink-soft); color: var(--ink-soft); font-weight: 700; }
+    .order-items { padding: 0.8rem 1.2rem; display: flex; flex-direction: column; gap: 4px; }
+    .order-item-row { display: flex; justify-content: space-between; padding: 7px 12px; background: var(--paper); border-radius: 50px; font-size: 0.82rem; }
+    .order-item-name { color: var(--ink); }
+    .order-item-qty { color: var(--accent); font-weight: 600; }
+    .order-card-footer { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1.2rem; border-top: 1px solid var(--sand-dark); }
+    .order-total-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); }
+    .order-total { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 1.1rem; color: var(--teal-deep); }
+    .verify-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 0.7rem; font-weight: 600; padding: 3px 10px 3px 6px; border-radius: 20px; margin-top: 4px; }
+    .verify-badge .verify-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .verify-badge.verified { background: #e8f5e9; color: #2e7d32; }
+    .verify-badge.verified .verify-dot { background: #4caf50; }
+    .verify-badge.unverified { background: #fff8e1; color: #b45309; }
+    .verify-badge.unverified .verify-dot { background: #ffc107; }
+    .empty-state { text-align: center; padding: 5rem 2rem; grid-column: 1 / -1; }
+    .empty-state .e-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
+    .empty-state p { font-size: 0.9rem; color: var(--ink-soft); }
+
+    /* ---- MODALS (shared) ---- */
+    .bottom-modal {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(16,20,24,0.5);
+      display: flex; align-items: flex-end; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .bottom-modal.open { opacity: 1; pointer-events: all; }
+    .modal-inner {
+      background: #fff; border-radius: 24px 24px 0 0;
+      width: 100%; max-width: 680px;
+      padding: 1.6rem 1.6rem 2rem;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+    }
+    .bottom-modal.open .modal-inner { transform: translateY(0); }
+    .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+    .modal-title { font-family: 'Fredoka', sans-serif; font-weight: 500; color: var(--teal-deep); font-size: 1.3rem; }
+    .modal-sub { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); margin-top: 3px; }
+    .modal-close { background: none; border: none; font-size: 1.1rem; color: var(--ink-soft); cursor: pointer; }
+
+    /* Revenue modal specifics */
+    #revenue-modal .modal-inner { max-width: 720px; }
+    .rev-total-row { margin-bottom: 1.4rem; line-height: 1; }
+    #rev-total-val { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 2.8rem; color: var(--teal-deep); }
+    .rev-dt { font-size: 1rem; color: var(--accent); margin-left: 5px; }
+    #revenue-canvas { width: 100%; display: block; }
+
+    /* Users modal specifics */
+    #users-modal .modal-inner { max-width: 580px; max-height: 88vh; overflow-y: auto; }
+
+    .user-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1.4rem; }
+    .user-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--paper); border-radius: 50px; padding: 0.55rem 0.9rem 0.55rem 1.2rem;
+    }
+    .user-row-info { display: flex; flex-direction: column; gap: 1px; }
+    .user-row-name { font-size: 0.87rem; color: var(--ink); font-weight: 600; }
+    .user-row-id { font-size: 0.7rem; color: var(--ink-soft); }
+    .user-row-right { display: flex; align-items: center; gap: 7px; }
+    .role-pill { font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 1px; background: rgba(60,185,160,0.14); color: var(--teal-deep); }
+    .user-del-btn {
+      background: none; border: 1px solid rgba(192,57,43,0.3);
+      color: #c0392b; font-size: 0.68rem; padding: 3px 10px; border-radius: 12px;
+      cursor: pointer; transition: 0.2s;
+    }
+    .user-del-btn:hover { background: #c0392b; color: #fff; }
+
+    .add-user-divider { border: none; border-top: 1px solid var(--sand-mid); margin: 0.2rem 0 1.2rem; }
+    .add-user-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); margin-bottom: 0.8rem; }
+    .add-user-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .add-user-grid .span2 { grid-column: 1 / -1; }
+    .u-input {
+      border: 1.5px solid var(--sand-mid); border-radius: 50px;
+      padding: 0.62rem 1rem; font-size: 0.83rem; outline: none; width: 100%;
+      font-family: 'Nunito Sans', sans-serif; color: var(--ink); background: var(--paper);
+      transition: border-color 0.2s;
+    }
+    .u-input:focus { border-color: var(--teal); }
+    .u-select {
+      border: 1.5px solid var(--sand-mid); border-radius: 50px;
+      padding: 0.62rem 1rem; font-size: 0.83rem; outline: none; width: 100%;
+      font-family: 'Nunito Sans', sans-serif; color: var(--ink); background: var(--paper);
+      cursor: pointer; appearance: none;
+    }
+    .add-user-btn {
+      background: var(--teal); color: #fff; border: none; border-radius: 50px;
+      padding: 0.72rem 1.4rem; font-size: 0.83rem; font-weight: 600;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .add-user-btn:hover { background: var(--teal-dark); }
+    .users-err { font-size: 0.78rem; color: #c0392b; min-height: 1rem; margin-top: 0.3rem; }
+
+    /* ---- RESPONSIVE ---- */
+
+    /* Tablet */
+    @media (max-width: 900px) {
+      .orders-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+      .stats-bar { padding: 1.2rem 1.5rem; }
+    }
+
+    /* Mobile */
+    @media (max-width: 600px) {
+      /* Header */
+      header {
+        height: auto;
+        min-height: 56px;
+        padding: calc(0.6rem + env(safe-area-inset-top, 0px)) 1rem 0.6rem;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        align-items: center;
+      }
+      .admin-badge { display: none; }
+      .admin-logo { font-size: 1rem; letter-spacing: 3px; }
+      .header-user, .header-role-pill, #order-count-badge { display: none; }
+      .header-right { gap: 0.4rem; }
+      .users-btn { font-size: 0.66rem; padding: 4px 10px; }
+      .clear-btn { font-size: 0.66rem; padding: 4px 10px; }
+      .logout-btn { font-size: 0.66rem; padding: 4px 10px; }
+
+      /* Stats — 2×2 grid */
+      .stats-bar {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 1rem;
+        gap: 0.6rem;
+      }
+      .stat-card { padding: 0.9rem 1rem; }
+      .stat-card .s-value { font-size: 1.5rem; }
+      .stat-card .s-sub { font-size: 0.7rem; }
+
+      /* Filters — horizontal scroll */
+      .filters {
+        padding: 0 1rem 1rem;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 6px;
+      }
+      .filters::-webkit-scrollbar { display: none; }
+      .filter-btn { flex-shrink: 0; padding: 5px 14px; font-size: 0.74rem; }
+
+      /* Orders — single column */
+      .orders-container { padding: 0 1rem 3rem; }
+      .orders-grid { grid-template-columns: 1fr; gap: 0.8rem; }
+
+      /* Phase buttons — 2×2 on mobile */
+      .phase-actions { grid-template-columns: repeat(2, 1fr); gap: 5px; padding: 0.4rem 1rem 1rem; }
+      .phase-btn { font-size: 0.66rem; padding: 8px 6px; border-radius: 8px; }
+
+      /* Modals */
+      .modal-inner { padding: 1.5rem 1.2rem 2rem !important; }
+      .add-user-grid { grid-template-columns: 1fr; }
+      .add-user-grid .span2 { grid-column: 1; }
+    }
+
+    /* Very small (< 360px) */
+    @media (max-width: 360px) {
+      .phase-actions { grid-template-columns: repeat(2, 1fr); }
+      .stats-bar { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    }
+
+    /* ---- PRODUITS MODAL ---- */
+    .prod-btn { background:none; border:1px solid rgba(244,231,198,0.4); color:var(--cream); font-size:0.72rem; padding:5px 13px; border-radius:20px; cursor:pointer; transition:0.2s; font-family:'Nunito Sans',sans-serif; }
+    .prod-btn:hover { border-color:var(--cream); background:rgba(244,231,198,0.12); }
+    .prod-cat-filter { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:1rem; overflow-x:auto; padding-bottom:2px; }
+    .prod-cat-btn { background:none; border:1px solid var(--sand-mid); color:var(--ink-soft); padding:4px 11px; border-radius:20px; font-size:0.7rem; cursor:pointer; font-family:'Nunito Sans',sans-serif; transition:0.2s; flex-shrink:0; }
+    .prod-cat-btn.active { background:var(--teal); color:#fff; border-color:var(--teal); }
+    .prod-list { display:flex; flex-direction:column; gap:5px; margin-bottom:1.2rem; max-height:46vh; overflow-y:auto; }
+    .prod-item { display:flex; align-items:center; gap:8px; padding:7px 10px; background:var(--paper); border-radius:10px; }
+    .prod-item.prod-hidden .prod-item-name { opacity:0.4; text-decoration:line-through; }
+    .prod-item-info { flex:1; min-width:0; }
+    .prod-item-name { font-size:0.82rem; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .prod-item-cat { font-size:0.62rem; color:var(--accent); letter-spacing:1px; text-transform:uppercase; margin-top:1px; }
+    .prod-price-input { width:68px; border:1.5px solid var(--sand-mid); border-radius:20px; padding:4px 7px; font-size:0.78rem; font-family:'Nunito Sans',sans-serif; color:var(--teal-deep); text-align:center; background:#fff; }
+    .prod-price-input:focus { outline:none; border-color:var(--teal); }
+    .prod-icon-btn { background:none; border:none; font-size:0.95rem; cursor:pointer; padding:4px 5px; border-radius:6px; transition:0.15s; line-height:1; }
+    .prod-icon-btn:hover { background:var(--sand-dark); }
+    .prod-add-divider { border:none; border-top:1px solid var(--sand-mid); margin:1rem 0; }
+    .prod-add-title { font-family:'Fredoka',sans-serif; font-weight:500; color:var(--teal-deep); font-size:1rem; margin-bottom:0.8rem; }
+    .prod-add-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .p-inp { width:100%; border:1.5px solid var(--sand-mid); border-radius:50px; padding:0.62rem 1rem; font-size:0.82rem; font-family:'Nunito Sans',sans-serif; color:var(--ink); background:var(--paper); outline:none; }
+    .p-inp:focus { border-color:var(--teal); }
+    .prod-add-full { grid-column:1/-1; }
+    .prod-add-btn { background:var(--teal); color:#fff; border:none; border-radius:50px; padding:0.75rem; font-size:0.85rem; font-weight:600; cursor:pointer; font-family:'Nunito Sans',sans-serif; transition:0.2s; width:100%; margin-top:0.4rem; }
+    .prod-add-btn:hover { background:var(--teal-dark); }
+    .prod-err { font-size:0.78rem; color:#c0392b; min-height:1rem; margin-top:0.3rem; }
+    #products-modal .modal-inner { max-width:640px; max-height:90vh; overflow-y:auto; }
+    /* Revenue period */
+    .rev-period-row { display:flex; gap:6px; margin-bottom:0.8rem; }
+    .rev-period-btn { background:none; border:1px solid var(--sand-mid); color:var(--ink-soft); padding:4px 14px; border-radius:20px; font-size:0.72rem; cursor:pointer; font-family:'Nunito Sans',sans-serif; transition:0.2s; }
+    .rev-period-btn.active { background:var(--teal); color:#fff; border-color:var(--teal); }
+    @media (max-width:600px) {
+      .prod-add-grid { grid-template-columns:1fr; }
+      .prod-list { max-height:38vh; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ====== GATE ====== -->
+<div id="admin-gate">
+
+  <!-- Connexion -->
+  <div class="gate-card" id="gate-login" style="display:none;">
+    <svg class="gate-mono" width="54" height="54" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="1.4" />
+      <circle cx="32" cy="32" r="23.5" stroke="currentColor" stroke-width="1" opacity="0.55" />
+      <path d="M21 43 V24 l11 13 11-13 v19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M25 20.5 a8 8 0 0 1 14 0" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.75" />
+    </svg>
+    <div class="gate-logo">MORNACO</div>
+    <div class="gate-title">Administration</div>
+    <div class="gate-sub">Accès restreint</div>
+    <div class="gate-field">
+      <label for="login-username">Identifiant</label>
+      <input type="text" id="login-username" class="gate-input" placeholder="Votre identifiant"
+             autocomplete="username"
+             onkeydown="if(event.key==='Enter')document.getElementById('login-pwd').focus()" />
+    </div>
+    <div class="gate-field">
+      <label for="login-pwd">Mot de passe</label>
+      <input type="password" id="login-pwd" class="gate-input" placeholder="••••••"
+             autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')doLogin()" />
+    </div>
+    <button class="gate-btn" onclick="doLogin()">Connexion</button>
+    <div class="gate-err" id="gate-err-login"></div>
+  </div>
+
+</div>
+
+<!-- ====== CONTENU ADMIN ====== -->
+<div id="admin-content" style="display:none;">
+
+  <header>
+    <div>
+      <a href="/" class="admin-logo">MORNACO</a>
+      <div class="admin-badge">Administration</div>
+    </div>
+    <div class="header-right">
+      <span class="live-dot"></span>
+      <span class="header-user" id="header-username"></span>
+      <span class="header-role-pill" id="header-role"></span>
+      <span id="order-count-badge">0 commande</span>
+      <button class="prod-btn" onclick="openProductsModal()">Produits</button>
+      <button class="users-btn" id="users-btn" onclick="openUsersModal()" style="display:none;">Utilisateurs</button>
+      <button class="logout-btn" onclick="doLogout()">Déconnexion</button>
+    </div>
+  </header>
+
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="s-label">Total commandes</div>
+      <div class="s-value" id="stat-total">0</div>
+      <div class="s-sub">aujourd'hui</div>
+    </div>
+    <div class="stat-card">
+      <div class="s-label">En attente</div>
+      <div class="s-value" id="stat-waiting">0</div>
+      <div class="s-sub">à préparer</div>
+    </div>
+    <div class="stat-card clickable" onclick="openRevenueModal()" title="Voir l'évolution du CA">
+      <div class="s-label">Chiffre d'affaires</div>
+      <div class="s-value" id="stat-revenue">0</div>
+      <div class="s-sub">dinars · voir courbe ↗</div>
+    </div>
+    <div class="stat-card">
+      <div class="s-label">Servis</div>
+      <div class="s-value" id="stat-done">0</div>
+      <div class="s-sub">complétées</div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('all', this)">Toutes</button>
+    <button class="filter-btn" onclick="setFilter('en attente', this)">En attente</button>
+    <button class="filter-btn" onclick="setFilter('en preparation', this)">En préparation</button>
+    <button class="filter-btn" onclick="setFilter('pret', this)">Prêt</button>
+    <button class="filter-btn" onclick="setFilter('servi', this)">Servi</button>
+  </div>
+
+  <div class="orders-container">
+    <div class="orders-grid" id="orders-grid"></div>
+  </div>
+
+  <!-- Modal CA -->
+  <div id="revenue-modal" class="bottom-modal">
+    <div class="modal-inner">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Chiffre d'affaires</div>
+          <div class="modal-sub">Évolution cumulée · <span id="rev-orders-count">0</span> commandes</div>
+        </div>
+        <button class="modal-close" onclick="closeRevenueModal()">✕</button>
+      </div>
+      <div class="rev-period-row">
+        <button class="rev-period-btn active" onclick="setRevPeriod('all',this)">Tout</button>
+        <button class="rev-period-btn" onclick="setRevPeriod('month',this)">Mois</button>
+        <button class="rev-period-btn" onclick="setRevPeriod('week',this)">Semaine</button>
+        <button class="rev-period-btn" onclick="setRevPeriod('day',this)">Jour</button>
+      </div>
+      <div class="rev-total-row">
+        <span id="rev-total-val">0.000</span><span class="rev-dt">DT</span>
+      </div>
+      <canvas id="revenue-canvas"></canvas>
+    </div>
+  </div>
+
+  <!-- Modal Produits -->
+  <div id="products-modal" class="bottom-modal">
+    <div class="modal-inner">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Gestion des produits</div>
+          <div class="modal-sub" id="prod-count-label">Chargement…</div>
+        </div>
+        <button class="modal-close" onclick="closeProductsModal()">✕</button>
+      </div>
+      <div class="prod-cat-filter" id="prod-cat-filter"></div>
+      <div class="prod-list" id="prod-list"></div>
+      <hr class="prod-add-divider">
+      <div class="prod-add-title">Ajouter un produit</div>
+      <div class="prod-add-grid">
+        <input class="p-inp" id="new-prod-name" placeholder="Nom du produit">
+        <select class="p-inp" id="new-prod-cat"></select>
+        <input class="p-inp" id="new-prod-price" type="number" step="0.001" min="0" placeholder="Prix (DT)">
+        <label class="p-inp" style="display:flex;align-items:center;gap:8px;border-radius:12px;cursor:pointer;">
+          <input type="checkbox" id="new-prod-featured"> Incontournable
+        </label>
+      </div>
+      <button class="prod-add-btn" onclick="addProduct()">+ Ajouter</button>
+      <div class="prod-err" id="prod-err"></div>
+    </div>
+  </div>
+
+  <!-- Modal Utilisateurs (superadmin) -->
+  <div id="users-modal" class="bottom-modal">
+    <div class="modal-inner">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Utilisateurs</div>
+          <div class="modal-sub">Gestion des comptes admin</div>
+        </div>
+        <button class="modal-close" onclick="closeUsersModal()">✕</button>
+      </div>
+
+      <div class="user-list" id="user-list">
+        <div style="text-align:center;color:var(--accent);font-size:0.85rem;padding:1rem 0;">Chargement...</div>
+      </div>
+
+      <hr class="add-user-divider" />
+      <div class="add-user-title">Ajouter un utilisateur</div>
+      <div class="add-user-grid">
+        <input type="text" id="new-username" class="u-input" placeholder="Identifiant" autocomplete="off" />
+        <input type="password" id="new-pwd" class="u-input" placeholder="Mot de passe (min. 6 car.)" autocomplete="new-password" />
+        <select id="new-role" class="u-select">
+          <option value="admin">Admin</option>
+          <option value="superadmin">Super Admin</option>
+        </select>
+        <button class="add-user-btn span2" onclick="createUser()">Ajouter l'utilisateur</button>
+      </div>
+      <div class="users-err" id="users-err"></div>
+    </div>
+  </div>
+
+</div><!-- /#admin-content -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  /* Base Supabase — partagée avec BISOU pour l'instant (voir README, section admin). */
+  const SUPABASE_URL = 'https://vfsfzdtbcdnxnzkinbbc.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_Bo7bbgtuJJgX3Prl5x_mnw_3cizbkvs';
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+</script>
+<script>
+  const _SK = 'mornaco_adm_s1';
+
+  async function _sha256(s) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  function _getSession() { try { return JSON.parse(sessionStorage.getItem(_SK)||'null'); } catch { return null; } }
+  function _setSession(u) { sessionStorage.setItem(_SK, JSON.stringify(u)); }
+  function _clearSession() { sessionStorage.removeItem(_SK); }
+
+  function _showAdmin(user) {
+    document.getElementById('admin-gate').style.display = 'none';
+    document.getElementById('admin-content').style.display = 'block';
+    document.getElementById('header-username').textContent = user.display_name || user.username;
+    document.getElementById('header-role').textContent = user.role === 'superadmin' ? 'Super Admin' : 'Admin';
+    if (user.role === 'superadmin') document.getElementById('users-btn').style.display = '';
+    _initAdmin();
+  }
+
+  /* ---- Gate init ---- */
+  function initGate() {
+    const session = _getSession();
+    if (session) { _showAdmin(session); return; }
+    document.getElementById('gate-login').style.display = 'flex';
+    setTimeout(() => document.getElementById('login-username').focus(), 100);
+  }
+
+  async function doLogin() {
+    const username = document.getElementById('login-username').value.trim();
+    const pwd = document.getElementById('login-pwd').value;
+    const err = document.getElementById('gate-err-login');
+    err.textContent = '';
+    if (!username || !pwd) { err.textContent = 'Identifiant et mot de passe requis'; return; }
+
+    const { data, error } = await db.rpc('admin_login', { p_username: username, p_hash: await _sha256(pwd) });
+    if (error || !data) {
+      err.textContent = 'Identifiant ou mot de passe incorrect';
+      document.getElementById('login-pwd').value = '';
+      document.getElementById('login-pwd').focus();
+      return;
+    }
+    const user = { id: data.id, username: data.username, display_name: data.display_name, role: data.role, token: data.token };
+    _setSession(user);
+    _showAdmin(user);
+  }
+
+  function doLogout() { _clearSession(); location.reload(); }
+
+  /* ---- Admin logic ---- */
+  const STATUSES = ['en attente','en preparation','pret','servi'];
+  const STATUS_LABELS = { 'en attente':'En attente','en preparation':'En préparation','pret':'Prêt ✓','servi':'Servi' };
+  let currentFilter = 'all', allOrders = [];
+
+  function _initAdmin() {
+    fetchOrders();
+    db.channel('orders-changes')
+      .on('postgres_changes', { event:'*', schema:'public', table:'orders' }, () => fetchOrders())
+      .subscribe();
+    document.getElementById('revenue-modal').addEventListener('click', e => {
+      if (e.target===document.getElementById('revenue-modal') && Date.now()-_revAt>400) closeRevenueModal();
+    });
+    document.getElementById('users-modal').addEventListener('click', e => {
+      if (e.target===document.getElementById('users-modal') && Date.now()-_usersAt>400) closeUsersModal();
+    });
+  }
+
+  async function fetchOrders() {
+    const { data, error } = await db.from('orders').select('*').order('verified',{ascending:false}).order('id',{ascending:false});
+    if (!error) allOrders = data || [];
+    renderOrders();
+  }
+
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderOrders();
+  }
+
+  function _esc(str) {
+    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  async function setStatus(id, status) {
+    const session = _getSession();
+    await db.rpc('admin_set_order_status', { p_token: session.token, p_order_id: id, p_status: status });
+    fetchOrders();
+  }
+
+  async function clearAll() {
+    if (!confirm('Effacer toutes les commandes ?')) return;
+    const session = _getSession();
+    await db.rpc('admin_clear_orders', { p_token: session.token });
+    fetchOrders();
+  }
+
+  function renderOrders() {
+    const orders = allOrders;
+    const filtered = currentFilter==='all' ? orders : orders.filter(o => o.status===currentFilter);
+    document.getElementById('stat-total').textContent = orders.length;
+    document.getElementById('stat-waiting').textContent = orders.filter(o=>o.status==='en attente').length;
+    document.getElementById('stat-revenue').textContent = orders.reduce((s,o)=>s+parseFloat(o.total),0).toFixed(3);
+    document.getElementById('stat-done').textContent = orders.filter(o=>o.status==='servi').length;
+    document.getElementById('order-count-badge').textContent = orders.length+(orders.length===1?' commande':' commandes');
+    const grid = document.getElementById('orders-grid');
+    if (filtered.length===0) {
+      grid.innerHTML = `<div class="empty-state"><div class="e-icon">☕</div><p>Aucune commande${currentFilter!=='all'?' dans cette catégorie':' pour le moment'}</p></div>`;
+      return;
+    }
+    grid.innerHTML = filtered.map(o => `
+      <div class="order-card${o.status==='servi'?' done':''}${o.verified?' priority':''}">
+        <div class="order-card-header">
+          <div>
+            <div class="order-ref">${_esc(o.ref)}</div>
+            <div class="order-time">${_esc(o.date)} · ${_esc(o.time)}</div>
+            <span class="verify-badge ${o.verified?'verified':'unverified'}">
+              <span class="verify-dot"></span>${o.verified?'Vérifié':'Non vérifié'}
+            </span>
+          </div>
+          <span class="status-pill ${o.status.replace(/ /g,'-')}">
+            ${STATUS_LABELS[o.status]}
+          </span>
+        </div>
+        <div class="order-items">
+          ${o.items.map(i=>`<div class="order-item-row"><span class="order-item-name">${_esc(i.name)}</span><span class="order-item-qty">× ${_esc(i.qty)}</span></div>`).join('')}
+        </div>
+        <div class="phase-actions">
+          ${STATUSES.map(s=>`<button class="phase-btn ${s.replace(/ /g,'-')}${o.status===s?' active':''}" onclick="setStatus(${o.id},'${s}')">${STATUS_LABELS[s].replace(' ✓','')}</button>`).join('')}
+        </div>
+        <div class="order-card-footer">
+          <div><div class="order-total-label">Total</div><div class="order-total">${_esc(o.total)} DT</div></div>
+        </div>
+      </div>`).join('');
+  }
+
+  /* ---- Revenue modal ---- */
+  let _revAt = 0, revPeriod = 'all';
+
+  function _filterOrdersByPeriod(orders) {
+    if (revPeriod === 'all') return orders;
+    const now = new Date();
+    return orders.filter(o => {
+      if (!o.date) return false;
+      const [d,m,y] = o.date.split('/');
+      const date = new Date(+y, +m-1, +d);
+      if (revPeriod === 'day') {
+        return date.toDateString() === now.toDateString();
+      } else if (revPeriod === 'week') {
+        const diff = (now - date) / 86400000;
+        return diff >= 0 && diff < 7;
+      } else if (revPeriod === 'month') {
+        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+      }
+      return true;
+    });
+  }
+
+  function setRevPeriod(p, btn) {
+    revPeriod = p;
+    document.querySelectorAll('.rev-period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const filtered = _filterOrdersByPeriod(allOrders);
+    const total = filtered.reduce((s,o)=>s+parseFloat(o.total||0),0);
+    document.getElementById('rev-total-val').textContent = total.toFixed(3);
+    document.getElementById('rev-orders-count').textContent = filtered.length;
+    drawRevenueChart(filtered);
+  }
+
+  function openRevenueModal() {
+    _revAt = Date.now();
+    revPeriod = 'all';
+    document.querySelectorAll('.rev-period-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+    const total = allOrders.reduce((s,o)=>s+parseFloat(o.total||0),0);
+    document.getElementById('rev-total-val').textContent = total.toFixed(3);
+    document.getElementById('rev-orders-count').textContent = allOrders.length;
+    document.getElementById('revenue-modal').classList.add('open');
+    setTimeout(() => drawRevenueChart(allOrders), 60);
+  }
+  function closeRevenueModal() { document.getElementById('revenue-modal').classList.remove('open'); }
+
+  function drawRevenueChart(orders) {
+    if (!orders) orders = _filterOrdersByPeriod(allOrders);
+    const canvas = document.getElementById('revenue-canvas');
+    const dpr = Math.min(window.devicePixelRatio||1,2);
+    const W = canvas.parentElement.clientWidth, H = 190;
+    canvas.width = W*dpr; canvas.height = H*dpr; canvas.style.height = H+'px';
+    const ctx = canvas.getContext('2d'); ctx.scale(dpr,dpr);
+    const TEAL='#2a9c86',LABEL='#8aa39b',GRID='#ece2c6',AXIS='#dccfa8';
+    const pL=52,pR=16,pT=16,pB=38,cW=W-pL-pR,cH=H-pT-pB;
+    const sorted = [...orders].sort((a,b)=>{
+      const ts=o=>{const[d,m,y]=(o.date||'01/01/2024').split('/');const[hh,mm]=(o.time||'00:00').split(':');return new Date(+y,+m-1,+d,+hh,+mm).getTime();};
+      return ts(a)-ts(b);
+    });
+    ctx.clearRect(0,0,W,H);
+    if (!sorted.length) {
+      ctx.font='13px "Nunito Sans",sans-serif';ctx.fillStyle=LABEL;ctx.textAlign='center';
+      ctx.fillText('Aucune commande',W/2,H/2);return;
+    }
+    let cum=0;
+    const pts=sorted.map((o,i)=>{cum+=parseFloat(o.total||0);return{i,y:cum,label:o.time||''};});
+    const maxY=pts[pts.length-1].y||1,n=pts.length;
+    const px=i=>pL+(n===1?cW/2:(i/(n-1))*cW);
+    const py=v=>pT+cH-(v/maxY)*cH;
+    for(let t=0;t<=4;t++){
+      const v=(maxY/4)*t,y=py(v);
+      ctx.strokeStyle=GRID;ctx.lineWidth=0.8;ctx.beginPath();ctx.moveTo(pL,y);ctx.lineTo(W-pR,y);ctx.stroke();
+      ctx.font='9px "Nunito Sans",sans-serif';ctx.fillStyle=LABEL;ctx.textAlign='right';ctx.fillText(v.toFixed(0),pL-5,y+3.5);
+    }
+    ctx.strokeStyle=AXIS;ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(pL,pT);ctx.lineTo(pL,pT+cH);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(pL,pT+cH);ctx.lineTo(W-pR,pT+cH);ctx.stroke();
+    const grad=ctx.createLinearGradient(0,pT,0,pT+cH);
+    grad.addColorStop(0,'rgba(42,156,134,0.22)');grad.addColorStop(1,'rgba(42,156,134,0.01)');
+    ctx.beginPath();pts.forEach((p,i)=>i===0?ctx.moveTo(px(i),py(p.y)):ctx.lineTo(px(i),py(p.y)));
+    ctx.lineTo(px(n-1),pT+cH);ctx.lineTo(px(0),pT+cH);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+    ctx.beginPath();pts.forEach((p,i)=>i===0?ctx.moveTo(px(i),py(p.y)):ctx.lineTo(px(i),py(p.y)));
+    ctx.strokeStyle=TEAL;ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
+    pts.forEach(p=>{
+      ctx.beginPath();ctx.arc(px(p.i),py(p.y),4,0,Math.PI*2);
+      ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle=TEAL;ctx.lineWidth=2;ctx.stroke();
+    });
+    const step=Math.max(1,Math.ceil(n/6));
+    ctx.font='9px "Nunito Sans",sans-serif';ctx.fillStyle=LABEL;ctx.textAlign='center';
+    pts.forEach((p,i)=>{if(i%step===0||i===n-1)ctx.fillText(p.label,px(i),pT+cH+20);});
+  }
+
+  /* ---- Users modal ---- */
+  let _usersAt = 0;
+
+  async function openUsersModal() {
+    _usersAt = Date.now();
+    document.getElementById('users-modal').classList.add('open');
+    await loadUsers();
+  }
+  function closeUsersModal() {
+    document.getElementById('users-modal').classList.remove('open');
+    document.getElementById('users-err').textContent = '';
+  }
+
+  async function loadUsers() {
+    const session = _getSession();
+    const { data, error } = await db.rpc('admin_list_users', { p_requester_id: session.id });
+    const list = document.getElementById('user-list');
+    if (error || !data) { list.innerHTML='<div style="color:#c0392b;font-size:0.82rem;text-align:center;">Erreur de chargement</div>'; return; }
+    const users = Array.isArray(data) ? data : [];
+    if (!users.length) { list.innerHTML='<div style="color:var(--accent);font-size:0.82rem;text-align:center;padding:1rem 0;">Aucun utilisateur</div>'; return; }
+    list.innerHTML = users.map(u => `
+      <div class="user-row">
+        <div class="user-row-info">
+          <div class="user-row-name">${_esc(u.display_name||u.username)}</div>
+          <div class="user-row-id">@${_esc(u.username)} · ${u.created_at?new Date(u.created_at).toLocaleDateString('fr-FR'):''}</div>
+        </div>
+        <div class="user-row-right">
+          <span class="role-pill">${u.role==='superadmin'?'Super Admin':'Admin'}</span>
+          ${u.id!==session.id
+            ? `<button class="user-del-btn" onclick="deleteUser('${_esc(u.id)}')">Retirer</button>`
+            : `<span style="font-size:0.7rem;color:var(--accent);">(vous)</span>`}
+        </div>
+      </div>`).join('');
+  }
+
+  async function createUser() {
+    const session = _getSession();
+    const username = document.getElementById('new-username').value.trim();
+    const pwd  = document.getElementById('new-pwd').value;
+    const role = document.getElementById('new-role').value;
+    const err  = document.getElementById('users-err');
+    err.textContent = '';
+    if (!username)     { err.textContent='Identifiant requis'; return; }
+    if (pwd.length<6)  { err.textContent='Mot de passe : minimum 6 caractères'; return; }
+
+    const { data, error } = await db.rpc('admin_create_user', {
+      p_username: username, p_hash: await _sha256(pwd),
+      p_display_name: username, p_role: role,
+      p_requester_id: session.id
+    });
+    if (error||(data&&data.error)) { err.textContent=(data&&data.error)||(error&&error.message)||'Erreur'; return; }
+    ['new-username','new-pwd'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('new-role').value='admin';
+    await loadUsers();
+  }
+
+  async function deleteUser(userId) {
+    if (!confirm('Retirer cet utilisateur ?')) return;
+    const session = _getSession();
+    const { data, error } = await db.rpc('admin_delete_user', { p_target_id: userId, p_requester_id: session.id });
+    if (error||(data&&data.error)) { document.getElementById('users-err').textContent=(data&&data.error)||'Erreur'; return; }
+    await loadUsers();
+  }
+
+  /* ---- Products modal ---- */
+  let _allProducts = [], _prodCat = 'all';
+
+  function openProductsModal() {
+    document.getElementById('products-modal').classList.add('open');
+    fetchProducts();
+  }
+  function closeProductsModal() {
+    document.getElementById('products-modal').classList.remove('open');
+    document.getElementById('prod-err').textContent = '';
+  }
+
+  async function fetchProducts() {
+    document.getElementById('prod-count-label').textContent = 'Chargement…';
+    const { data, error } = await db.from('products').select('*').order('category').order('sort_order');
+    if (error) { document.getElementById('prod-count-label').textContent = 'Erreur de chargement'; return; }
+    _allProducts = data || [];
+    _renderProdCategories();
+    _renderProdList();
+  }
+
+  function _renderProdCategories() {
+    const cats = ['all', ...new Set(_allProducts.map(p => p.category).filter(Boolean))];
+    const filter = document.getElementById('prod-cat-filter');
+    filter.innerHTML = cats.map(c =>
+      `<button class="prod-cat-btn${c===_prodCat?' active':''}" onclick="_setProdCat('${_esc(c)}')">${c==='all'?'Tous':_esc(c)}</button>`
+    ).join('');
+    const sel = document.getElementById('new-prod-cat');
+    const existing = sel.value;
+    sel.innerHTML = cats.filter(c=>c!=='all').map(c=>`<option value="${_esc(c)}">${_esc(c)}</option>`).join('') +
+      `<option value="__new__">+ Nouvelle catégorie…</option>`;
+    if (existing && [...sel.options].some(o=>o.value===existing)) sel.value = existing;
+  }
+
+  function _setProdCat(cat) {
+    _prodCat = cat;
+    document.querySelectorAll('.prod-cat-btn').forEach(b => b.classList.remove('active'));
+    [...document.querySelectorAll('.prod-cat-btn')].find(b => b.textContent === (cat==='all'?'Tous':cat))?.classList.add('active');
+    _renderProdList();
+  }
+
+  function _renderProdList() {
+    const list = document.getElementById('prod-list');
+    const items = _prodCat === 'all' ? _allProducts : _allProducts.filter(p => p.category === _prodCat);
+    document.getElementById('prod-count-label').textContent = `${_allProducts.length} produit${_allProducts.length>1?'s':''}`;
+    if (!items.length) {
+      list.innerHTML = '<div style="color:var(--accent);font-size:0.82rem;text-align:center;padding:1.5rem 0;">Aucun produit</div>';
+      return;
+    }
+    list.innerHTML = items.map(p => `
+      <div class="prod-item${p.visible===false?' prod-hidden':''}" id="prod-item-${_esc(p.id)}">
+        <div class="prod-item-info">
+          <div class="prod-item-name">${_esc(p.name)}</div>
+          <div class="prod-item-cat">${_esc(p.category||'')}</div>
+        </div>
+        <input class="prod-price-input" type="number" step="0.001" min="0"
+          value="${parseFloat(p.price||0).toFixed(3)}"
+          onblur="savePrice('${p.id}', this.value)"
+          onkeydown="if(event.key==='Enter')this.blur()">
+        <button class="prod-icon-btn" title="${p.featured?'Retirer des incontournables':'Mettre en avant'}"
+          onclick="toggleFeatured('${p.id}',${!p.featured})">${p.featured?'⭐':'☆'}</button>
+        <button class="prod-icon-btn" title="${p.visible===false?'Afficher':'Masquer'}"
+          onclick="toggleVisible('${p.id}',${p.visible!==false?false:true})">${p.visible===false?'🙈':'👁️'}</button>
+        <button class="prod-icon-btn" title="Supprimer" onclick="deleteProduct('${p.id}')" style="color:#b91c1c;">🗑️</button>
+      </div>`).join('');
+  }
+
+  async function savePrice(id, val) {
+    const price = parseFloat(val);
+    if (isNaN(price) || price < 0) return;
+    const session = _getSession();
+    await db.rpc('admin_product_save', { p_token: session.token, p_id: id, p_price: price });
+    const idx = _allProducts.findIndex(p => p.id === id);
+    if (idx !== -1) _allProducts[idx].price = price;
+  }
+
+  async function toggleVisible(id, visible) {
+    const session = _getSession();
+    await db.rpc('admin_product_save', { p_token: session.token, p_id: id, p_visible: visible });
+    const idx = _allProducts.findIndex(p => p.id === id);
+    if (idx !== -1) _allProducts[idx].visible = visible;
+    _renderProdList();
+  }
+
+  async function toggleFeatured(id, featured) {
+    const session = _getSession();
+    await db.rpc('admin_product_save', { p_token: session.token, p_id: id, p_featured: featured });
+    const idx = _allProducts.findIndex(p => p.id === id);
+    if (idx !== -1) _allProducts[idx].featured = featured;
+    _renderProdList();
+  }
+
+  async function deleteProduct(id) {
+    if (!confirm('Supprimer ce produit ?')) return;
+    const session = _getSession();
+    const { error } = await db.rpc('admin_product_delete', { p_token: session.token, p_id: id });
+    if (error) { document.getElementById('prod-err').textContent = error.message; return; }
+    _allProducts = _allProducts.filter(p => p.id !== id);
+    _renderProdCategories();
+    _renderProdList();
+  }
+
+  async function addProduct() {
+    const err = document.getElementById('prod-err');
+    err.textContent = '';
+    let name = document.getElementById('new-prod-name').value.trim();
+    let catEl = document.getElementById('new-prod-cat');
+    let cat = catEl.value;
+    const price = parseFloat(document.getElementById('new-prod-price').value);
+    const featured = document.getElementById('new-prod-featured').checked;
+
+    if (cat === '__new__') {
+      cat = prompt('Nom de la nouvelle catégorie :')?.trim();
+      if (!cat) return;
+    }
+    if (!name) { err.textContent = 'Nom requis'; return; }
+    if (isNaN(price) || price < 0) { err.textContent = 'Prix invalide'; return; }
+
+    const session = _getSession();
+    const { data, error } = await db.rpc('admin_product_save', {
+      p_token: session.token, p_id: null,
+      p_name: name, p_category: cat, p_price: price,
+      p_visible: true, p_featured: featured, p_photo: null
+    });
+    if (error || (data && data.error)) {
+      err.textContent = (data && data.error) || (error && error.message) || 'Erreur';
+      return;
+    }
+    document.getElementById('new-prod-name').value = '';
+    document.getElementById('new-prod-price').value = '';
+    document.getElementById('new-prod-featured').checked = false;
+    await fetchProducts();
+  }
+
+  /* ---- Start ---- */
+  initGate();
+</script>
+</body>
+</html>
