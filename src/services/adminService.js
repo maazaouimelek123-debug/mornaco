@@ -143,10 +143,16 @@ export async function login(username, password) {
 
 // ============================================================
 // ============================================================
-// ORDERS (SUPABASE REALTIME + LOCAL MERGE + EVENT SYNC)
 // ============================================================
+// ORDERS (INSTANT OPTIMISTIC UI + SUPABASE REALTIME & HEARTBEAT)
+// ============================================================
+export function getOrdersSync() {
+  return getOrdersLocal()
+}
+
 export async function getOrders() {
-  let remoteOrders = []
+  const localOrders = getOrdersLocal()
+
   try {
     const { data, error } = await supabase
       .from('orders')
@@ -154,47 +160,67 @@ export async function getOrders() {
       .order('id', { ascending: false })
 
     if (!error && Array.isArray(data)) {
-      remoteOrders = data
+      const map = new Map()
+      // Remote data takes priority, but preserve any local pending orders not yet in DB
+      data.forEach((o) => map.set(String(o.id), o))
+      localOrders.forEach((o) => {
+        const key = String(o.id)
+        if (!map.has(key)) {
+          map.set(key, o)
+        }
+      })
+
+      const merged = Array.from(map.values()).sort((a, b) => (b.id || 0) - (a.id || 0))
+      localStorage.setItem(ORDERS_KEY, JSON.stringify(merged))
+      return merged
     }
   } catch (err) {
     console.warn('Supabase getOrders fallback:', err.message)
   }
 
-  const localOrders = getOrdersLocal()
-  const map = new Map()
-
-  // Prioritize remote items, then merge local items if missing
-  remoteOrders.forEach((o) => map.set(String(o.id), o))
-  localOrders.forEach((o) => {
-    const key = String(o.id)
-    if (!map.has(key)) {
-      map.set(key, o)
-    }
-  })
-
-  const merged = Array.from(map.values()).sort((a, b) => (b.id || 0) - (a.id || 0))
-  localStorage.setItem(ORDERS_KEY, JSON.stringify(merged))
-  return merged
+  return localOrders
 }
 
 export function subscribeOrders(onUpdate) {
-  const refresh = () => {
-    getOrders().then(onUpdate)
+  // 1. Instant 0ms update from local state
+  onUpdate(getOrdersLocal())
+
+  const refresh = async () => {
+    const orders = await getOrders()
+    onUpdate(orders)
   }
 
+  // 2. Initial background fetch
+  refresh()
+
+  // 3. Supabase Realtime channel subscription
   let channel = null
   try {
     channel = supabase
       .channel('mornaco-orders-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        refresh()
+      })
       .subscribe()
   } catch {
-    // Supabase subscription fallback
+    // Fallback if Realtime fails
   }
 
-  const handleCustomEvent = () => refresh()
+  // 4. Instant window event listener (same-tab / same-browser)
+  const handleCustomEvent = (e) => {
+    if (e.detail?.orders) {
+      onUpdate(e.detail.orders)
+    } else {
+      onUpdate(getOrdersLocal())
+      refresh()
+    }
+  }
+
   const handleStorageEvent = (e) => {
-    if (e.key === ORDERS_KEY) refresh()
+    if (e.key === ORDERS_KEY) {
+      onUpdate(getOrdersLocal())
+      refresh()
+    }
   }
 
   if (typeof window !== 'undefined') {
@@ -202,7 +228,11 @@ export function subscribeOrders(onUpdate) {
     window.addEventListener('storage', handleStorageEvent)
   }
 
+  // 5. Fast 2-second heartbeat polling for cross-device updates
+  const pollInterval = setInterval(refresh, 2000)
+
   return () => {
+    clearInterval(pollInterval)
     if (channel) supabase.removeChannel(channel)
     if (typeof window !== 'undefined') {
       window.removeEventListener('mornaco_order_changed', handleCustomEvent)
@@ -225,12 +255,7 @@ export async function createOrder(orderData) {
     items: orderData.items || [],
   }
 
-  try {
-    await supabase.from('orders').upsert([newOrder])
-  } catch (err) {
-    console.warn('Supabase insert order error:', err.message)
-  }
-
+  // A. INSTANT OPTIMISTIC UPDATE (0ms delay)
   const orders = getOrdersLocal()
   const exists = orders.some((o) => String(o.id) === String(newOrder.id))
   if (!exists) {
@@ -239,19 +264,25 @@ export async function createOrder(orderData) {
   }
 
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('mornaco_order_changed'))
+    window.dispatchEvent(
+      new CustomEvent('mornaco_order_changed', { detail: { orders } })
+    )
   }
+
+  // B. ASYNC BACKGROUND CLOUD SYNC
+  supabase
+    .from('orders')
+    .upsert([newOrder])
+    .then(({ error }) => {
+      if (error) console.warn('Supabase background insert order warning:', error.message)
+    })
+    .catch((err) => console.warn('Supabase background insert order error:', err.message))
 
   return newOrder
 }
 
 export async function updateOrderStatus(orderId, newStatus) {
-  try {
-    await supabase.from('orders').update({ status: newStatus }).eq('id', orderId)
-  } catch (err) {
-    console.warn('Supabase updateOrderStatus fallback:', err.message)
-  }
-
+  // A. INSTANT OPTIMISTIC UPDATE (0ms delay)
   const orders = getOrdersLocal()
   const idx = orders.findIndex((o) => String(o.id) === String(orderId))
   if (idx !== -1) {
@@ -260,23 +291,38 @@ export async function updateOrderStatus(orderId, newStatus) {
   }
 
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('mornaco_order_changed'))
+    window.dispatchEvent(
+      new CustomEvent('mornaco_order_changed', { detail: { orders } })
+    )
   }
+
+  // B. ASYNC BACKGROUND CLOUD SYNC
+  supabase
+    .from('orders')
+    .update({ status: newStatus })
+    .eq('id', orderId)
+    .then(({ error }) => {
+      if (error) console.warn('Supabase update order status warning:', error.message)
+    })
+    .catch((err) => console.warn('Supabase update order status error:', err.message))
 
   return orders
 }
 
 export async function clearAllOrders() {
+  localStorage.setItem(ORDERS_KEY, JSON.stringify([]))
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('mornaco_order_changed', { detail: { orders: [] } })
+    )
+  }
+
   try {
     await supabase.from('orders').delete().neq('id', 0)
   } catch (err) {
     console.warn('Supabase clearAllOrders fallback:', err.message)
   }
 
-  localStorage.setItem(ORDERS_KEY, JSON.stringify([]))
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('mornaco_order_changed'))
-  }
   return []
 }
 
