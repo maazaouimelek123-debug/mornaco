@@ -15,6 +15,7 @@ export default function CartDrawer() {
     isSubmitted,
     setIsSubmitted,
     lastOrderRef,
+    addedNotice,
   } = useCart()
 
   const [tableNum, setTableNum] = useState('')
@@ -29,6 +30,13 @@ export default function CartDrawer() {
 
   return (
     <>
+      {/* Added Toast Notification */}
+      {addedNotice && !isOpen && (
+        <div className="cart-toast-notice">
+          <span>+1 {addedNotice} ajouté au panier</span>
+        </div>
+      )}
+
       {/* Floating Cart Button */}
       {totalCount > 0 && !isOpen && (
         <button
@@ -62,11 +70,13 @@ export default function CartDrawer() {
 
             {isSubmitted ? (
               <div className="cart-success-view">
-                <div className="cart-success-icon">☕</div>
-                <h3>Commande transmise !</h3>
+                <div className="cart-success-badge">
+                  <Monogram size={48} />
+                </div>
+                <h3>Commande transmise</h3>
                 <p className="cart-success-ref">Référence : <strong>{lastOrderRef}</strong></p>
                 <p className="cart-success-desc">
-                  Votre commande a été envoyée directement au comptoir/cuisine. Notre équipe prépare vos consommations.
+                  Votre commande a été envoyée directement en cuisine. Notre équipe prépare vos consommations.
                 </p>
                 <button
                   className="cart-success-btn"
@@ -83,7 +93,9 @@ export default function CartDrawer() {
                 <div className="cart-body">
                   {cart.length === 0 ? (
                     <div className="cart-empty">
-                      <span className="cart-empty-icon">🛒</span>
+                      <div className="cart-empty-monogram">
+                        <Monogram size={38} />
+                      </div>
                       <p>Votre panier est vide</p>
                       <small>Sélectionnez des articles sur le menu pour commander.</small>
                     </div>
@@ -114,7 +126,7 @@ export default function CartDrawer() {
                               onClick={() => removeFromCart(item.name)}
                               title="Retirer"
                             >
-                              🗑️
+                              ✕
                             </button>
                           </div>
                         </div>
@@ -147,7 +159,7 @@ export default function CartDrawer() {
                       disabled={submitting}
                       className="cart-submit-btn"
                     >
-                      {submitting ? 'Envoi en cours…' : 'Envoyer la commande 🚀'}
+                      {submitting ? 'Envoi en cours…' : 'Envoyer la commande'}
                     </button>
                   </form>
                 )}

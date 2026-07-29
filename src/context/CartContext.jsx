@@ -8,6 +8,7 @@ export function CartProvider({ children }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [lastOrderRef, setLastOrderRef] = useState('')
+  const [addedNotice, setAddedNotice] = useState(null)
 
   const addToCart = (item) => {
     setCart((prev) => {
@@ -27,7 +28,10 @@ export function CartProvider({ children }) {
         },
       ]
     })
-    setIsOpen(true)
+
+    // Show smooth feedback toast without forcing the drawer open
+    setAddedNotice(item.name)
+    setTimeout(() => setAddedNotice(null), 1800)
   }
 
   const updateQty = (name, delta) => {
@@ -90,6 +94,7 @@ export function CartProvider({ children }) {
         isSubmitted,
         setIsSubmitted,
         lastOrderRef,
+        addedNotice,
       }}
     >
       {children}

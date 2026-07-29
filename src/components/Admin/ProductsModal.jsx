@@ -133,21 +133,21 @@ export default function ProductsModal({ isOpen, onClose, products = [], onRefres
                     title={p.featured ? 'Retirer des incontournables' : 'Mettre en avant'}
                     onClick={() => handleToggleFeatured(p.id, p.featured)}
                   >
-                    {p.featured ? '⭐' : '☆'}
+                    {p.featured ? '★' : '☆'}
                   </button>
                   <button
                     className="prod-icon-btn"
                     title={p.visible === false ? 'Afficher' : 'Masquer'}
                     onClick={() => handleToggleVisible(p.id, p.visible)}
                   >
-                    {p.visible === false ? '🙈' : '👁️'}
+                    {p.visible === false ? 'Masqué' : 'Visible'}
                   </button>
                   <button
                     className="prod-icon-btn prod-icon-btn--danger"
                     title="Supprimer"
                     onClick={() => handleDelete(p.id)}
                   >
-                    🗑️
+                    ✕
                   </button>
                 </div>
               </div>
@@ -208,7 +208,7 @@ export default function ProductsModal({ isOpen, onClose, products = [], onRefres
                 checked={newProdFeatured}
                 onChange={(e) => setNewProdFeatured(e.target.checked)}
               />
-              Incontournable ⭐
+              Incontournable ★
             </label>
 
             <button type="submit" className="admin-btn admin-btn--primary">

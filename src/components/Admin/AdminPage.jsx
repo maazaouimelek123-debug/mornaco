@@ -180,21 +180,21 @@ export default function AdminPage({ onBackToSite }) {
           </div>
 
           <button className="header-action-btn" onClick={() => setIsProductsOpen(true)}>
-            📖 Carte & Produits
+            Carte & Produits
           </button>
 
           {currentUser.role === 'superadmin' && (
             <button className="header-action-btn" onClick={() => setIsUsersOpen(true)}>
-              👥 Utilisateurs
+              Utilisateurs
             </button>
           )}
 
           <button className="header-action-btn header-action-btn--danger" onClick={handleClearOrders}>
-            🗑️ Purger
+            Purger
           </button>
 
           <button className="header-action-btn" onClick={onBackToSite} title="Voir le site public">
-            🌐 Site
+            Site public
           </button>
 
           <button className="header-action-btn header-action-btn--logout" onClick={handleLogout}>
@@ -226,7 +226,7 @@ export default function AdminPage({ onBackToSite }) {
           >
             <div className="s-label">Chiffre d'affaires</div>
             <div className="s-value s-value--teal">{totalRevenue.toFixed(3)}</div>
-            <div className="s-sub">dinars · voir courbe ↗</div>
+            <div className="s-sub">dinars · voir courbe</div>
           </div>
 
           <div className="stat-card">
@@ -259,7 +259,9 @@ export default function AdminPage({ onBackToSite }) {
         <div className="orders-container">
           {filteredOrders.length === 0 ? (
             <div className="empty-orders-card">
-              <span className="empty-icon">☕</span>
+              <div className="empty-icon">
+                <Monogram size={32} />
+              </div>
               <p>
                 Aucune commande {currentFilter !== 'all' ? 'dans cette catégorie' : 'pour le moment'}
               </p>
