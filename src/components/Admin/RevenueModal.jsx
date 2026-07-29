@@ -49,7 +49,6 @@ export default function RevenueModal({ isOpen, onClose, orders }) {
     // Mornaco Brand Colors
     const TEAL = '#3cb9a0'
     const TEAL_INK = '#14584b'
-    const CREAM = '#f4e7c6'
     const GRID = 'rgba(60, 185, 160, 0.15)'
     const AXIS = 'rgba(28, 48, 73, 0.2)'
 
