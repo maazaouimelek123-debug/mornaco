@@ -7,6 +7,7 @@ import {
   getProducts,
   getSession,
   login,
+  subscribeOrders,
   updateOrderStatus,
 } from '../../services/adminService.js'
 import RevenueModal from './RevenueModal.jsx'
@@ -47,9 +48,19 @@ export default function AdminPage({ onBackToSite }) {
     }
   }, [])
 
-  const loadDashboardData = () => {
-    setOrders(getOrders())
-    setProducts(getProducts())
+  useEffect(() => {
+    if (!currentUser) return
+    const unsubscribe = subscribeOrders((updatedOrders) => {
+      setOrders(updatedOrders)
+    })
+    return () => unsubscribe()
+  }, [currentUser])
+
+  const loadDashboardData = async () => {
+    const fetchedOrders = await getOrders()
+    const fetchedProducts = await getProducts()
+    setOrders(fetchedOrders)
+    setProducts(fetchedProducts)
   }
 
   const handleLoginSubmit = async (e) => {
@@ -58,7 +69,7 @@ export default function AdminPage({ onBackToSite }) {
     try {
       const user = await login(loginUser, loginPwd)
       setCurrentUser(user)
-      loadDashboardData()
+      await loadDashboardData()
     } catch (err) {
       setLoginErr(err.message || 'Échec de connexion')
     }
@@ -69,14 +80,14 @@ export default function AdminPage({ onBackToSite }) {
     setCurrentUser(null)
   }
 
-  const handleSetStatus = (orderId, newStatus) => {
-    const updated = updateOrderStatus(orderId, newStatus)
+  const handleSetStatus = async (orderId, newStatus) => {
+    const updated = await updateOrderStatus(orderId, newStatus)
     setOrders(updated)
   }
 
-  const handleClearOrders = () => {
+  const handleClearOrders = async () => {
     if (confirm('Voulez-vous vraiment effacer toutes les commandes enregistrées ?')) {
-      const updated = clearAllOrders()
+      const updated = await clearAllOrders()
       setOrders(updated)
     }
   }
