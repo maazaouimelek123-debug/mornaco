@@ -34,7 +34,7 @@ const DEFAULT_USERS = [
 ]
 
 // Extract default products from local MENU structure
-function extractDefaultProducts() {
+export function extractDefaultProducts() {
   const products = []
   try {
     if (Array.isArray(MENU)) {
@@ -272,13 +272,9 @@ function getOrdersLocal() {
 // ============================================================
 export async function getProducts() {
   try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('category')
-      .order('sort_order', { ascending: true })
+    const { data, error } = await supabase.from('products').select('*')
 
-    if (!error && data && data.length > 0) {
+    if (!error && Array.isArray(data) && data.length > 0) {
       localStorage.setItem(PRODUCTS_KEY, JSON.stringify(data))
       return data
     }

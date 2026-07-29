@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react'
-import { addProduct, deleteProduct, updateProduct } from '../../services/adminService.js'
+import {
+  addProduct,
+  deleteProduct,
+  extractDefaultProducts,
+  updateProduct,
+} from '../../services/adminService.js'
 
 export default function ProductsModal({ isOpen, onClose, products = [], onRefresh }) {
   const [catFilter, setCatFilter] = useState('all')
@@ -18,10 +23,13 @@ export default function ProductsModal({ isOpen, onClose, products = [], onRefres
 
   if (!isOpen) return null
 
-  const categories = ['all', ...new Set(products.map((p) => p.category).filter(Boolean))]
+  const displayProducts =
+    products && products.length > 0 ? products : extractDefaultProducts()
+
+  const categories = ['all', ...new Set(displayProducts.map((p) => p.category).filter(Boolean))]
 
   const filteredProducts =
-    catFilter === 'all' ? products : products.filter((p) => p.category === catFilter)
+    catFilter === 'all' ? displayProducts : displayProducts.filter((p) => p.category === catFilter)
 
   const handlePriceBlur = (id, newPriceVal) => {
     const val = parseFloat(newPriceVal)
@@ -81,7 +89,7 @@ export default function ProductsModal({ isOpen, onClose, products = [], onRefres
         <div className="admin-modal__header">
           <div>
             <h3 className="admin-modal__title">Gestion de la Carte</h3>
-            <p className="admin-modal__sub">{products.length} produit(s) enregistrés</p>
+            <p className="admin-modal__sub">{displayProducts.length} produit(s) enregistrés</p>
           </div>
           <button className="admin-modal__close" onClick={onClose} aria-label="Fermer">
             ✕

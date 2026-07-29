@@ -1064,4 +1064,48 @@ a:focus-visible, button:focus-visible {
   100% { opacity: 0; transform: translateY(-8px); }
 }
 
+/* ============================================================
+   RESPONSIVE MOBILE STYLES FOR ADMIN PAGE
+   ============================================================ */
+@media (max-width: 768px) {
+  .admin-header {
+    height: auto; padding: 0.8rem 1rem;
+    flex-direction: column; gap: 0.8rem; align-items: stretch;
+  }
+  .admin-header__brand { justify-content: space-between; width: 100%; }
+  .admin-header__nav {
+    display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-start; width: 100%;
+  }
+  .admin-header__btn { font-size: 0.72rem; padding: 5px 10px; flex: 1 1 auto; text-align: center; justify-content: center; }
+
+  .admin-page__content { padding: 1rem 0.8rem 2.5rem; }
+
+  .stats-bar { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 1.2rem; }
+  .stat-card { padding: 0.8rem 1rem; }
+  .stat-card__val { font-size: 1.3rem; }
+
+  .filters-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 1.2rem; scrollbar-width: none; }
+  .filter-btn { font-size: 0.75rem; padding: 6px 12px; white-space: nowrap; flex-shrink: 0; }
+
+  .orders-grid { grid-template-columns: 1fr; gap: 12px; }
+  .order-card { padding: 1rem; }
+  .phase-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .phase-btn { padding: 6px 4px; font-size: 0.72rem; text-align: center; }
+
+  /* Modals on Mobile */
+  .admin-modal { width: 94%; max-height: 90vh; padding: 1.2rem 1rem; border-radius: 20px; }
+  .prod-list { max-height: 240px; }
+  .prod-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .prod-item__actions { width: 100%; justify-content: space-between; }
+  .prod-add-grid { grid-template-columns: 1fr; }
+  .add-user-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .admin-header__title { font-size: 1rem; }
+  .admin-user-pill { font-size: 0.68rem; padding: 2px 6px; }
+  .floating-cart-btn { bottom: 16px; right: 16px; padding: 8px 14px; font-size: 0.8rem; }
+  .cart-toast-notice { bottom: 75px; right: 16px; font-size: 0.78rem; }
+}
+
 
