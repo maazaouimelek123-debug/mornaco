@@ -7,7 +7,7 @@ export default function Footer() {
       <span className="wordmark footer__name">MORNACO</span>
       <p>Coffee Lounge · Restaurant — Mornag, Ben Arous, Tunisie</p>
       <p className="footer__copy">
-        © 2026 MORNACO. Tous droits réservés. · <a href="#admin" style={{ textDecoration: 'underline', color: 'inherit' }}>Espace Admin</a>
+        © 2026 MORNACO. Tous droits réservés.
       </p>
     </footer>
   )

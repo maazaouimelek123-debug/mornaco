@@ -6,7 +6,6 @@ const LINKS = [
   { href: '#menu', label: 'La carte' },
   { href: '#ambiance', label: 'Ambiance' },
   { href: '#contact', label: 'Contact' },
-  { href: '#admin', label: 'Admin' },
 ]
 
 export default function Nav() {
