@@ -12,12 +12,13 @@ import { CartProvider } from './context/CartContext.jsx'
 import { useReveal } from './hooks/useReveal.js'
 
 export default function App() {
-  useReveal()
   const [isAdmin, setIsAdmin] = useState(false)
+  useReveal(isAdmin)
 
   useEffect(() => {
     const checkHash = () => {
-      setIsAdmin(window.location.hash === '#admin' || window.location.pathname === '/admin')
+      const isAdm = window.location.hash === '#admin' || window.location.pathname === '/admin'
+      setIsAdmin(isAdm)
     }
     checkHash()
     window.addEventListener('hashchange', checkHash)
@@ -29,6 +30,7 @@ export default function App() {
       <AdminPage
         onBackToSite={() => {
           window.location.hash = ''
+          window.scrollTo({ top: 0, behavior: 'instant' })
           setIsAdmin(false)
         }}
       />

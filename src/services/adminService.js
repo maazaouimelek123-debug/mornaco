@@ -142,41 +142,72 @@ export async function login(username, password) {
 }
 
 // ============================================================
-// ORDERS (SUPABASE REALTIME + LOCAL FALLBACK)
+// ============================================================
+// ORDERS (SUPABASE REALTIME + LOCAL MERGE + EVENT SYNC)
 // ============================================================
 export async function getOrders() {
+  let remoteOrders = []
   try {
     const { data, error } = await supabase
       .from('orders')
       .select('*')
-      .order('verified', { ascending: false })
       .order('id', { ascending: false })
 
-    if (!error && data && data.length > 0) {
-      localStorage.setItem(ORDERS_KEY, JSON.stringify(data))
-      return data
+    if (!error && Array.isArray(data)) {
+      remoteOrders = data
     }
   } catch (err) {
     console.warn('Supabase getOrders fallback:', err.message)
   }
 
-  return getOrdersLocal()
+  const localOrders = getOrdersLocal()
+  const map = new Map()
+
+  // Prioritize remote items, then merge local items if missing
+  remoteOrders.forEach((o) => map.set(String(o.id), o))
+  localOrders.forEach((o) => {
+    const key = String(o.id)
+    if (!map.has(key)) {
+      map.set(key, o)
+    }
+  })
+
+  const merged = Array.from(map.values()).sort((a, b) => (b.id || 0) - (a.id || 0))
+  localStorage.setItem(ORDERS_KEY, JSON.stringify(merged))
+  return merged
 }
 
 export function subscribeOrders(onUpdate) {
-  try {
-    const channel = supabase
-      .channel('mornaco-orders-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
-        getOrders().then(onUpdate)
-      })
-      .subscribe()
+  const refresh = () => {
+    getOrders().then(onUpdate)
+  }
 
-    return () => {
-      supabase.removeChannel(channel)
-    }
+  let channel = null
+  try {
+    channel = supabase
+      .channel('mornaco-orders-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, refresh)
+      .subscribe()
   } catch {
-    return () => {}
+    // Supabase subscription fallback
+  }
+
+  const handleCustomEvent = () => refresh()
+  const handleStorageEvent = (e) => {
+    if (e.key === ORDERS_KEY) refresh()
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('mornaco_order_changed', handleCustomEvent)
+    window.addEventListener('storage', handleStorageEvent)
+  }
+
+  return () => {
+    if (channel) supabase.removeChannel(channel)
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('mornaco_order_changed', handleCustomEvent)
+      window.removeEventListener('storage', handleStorageEvent)
+    }
   }
 }
 
@@ -195,62 +226,57 @@ export async function createOrder(orderData) {
   }
 
   try {
-    const { error } = await supabase.from('orders').insert([newOrder])
-    if (error) {
-      console.warn('Supabase insert order error:', error.message)
-    }
+    await supabase.from('orders').upsert([newOrder])
   } catch (err) {
-    console.warn('Supabase insert order fallback:', err.message)
+    console.warn('Supabase insert order error:', err.message)
   }
 
   const orders = getOrdersLocal()
-  orders.unshift(newOrder)
-  localStorage.setItem(ORDERS_KEY, JSON.stringify(orders))
+  const exists = orders.some((o) => String(o.id) === String(newOrder.id))
+  if (!exists) {
+    orders.unshift(newOrder)
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(orders))
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('mornaco_order_changed'))
+  }
+
   return newOrder
 }
 
 export async function updateOrderStatus(orderId, newStatus) {
-  const session = getSession()
-
-  // 1. Try Supabase update
   try {
-    if (session?.token) {
-      await supabase.rpc('admin_set_order_status', {
-        p_token: session.token,
-        p_order_id: orderId,
-        p_status: newStatus,
-      })
-    } else {
-      await supabase.from('orders').update({ status: newStatus }).eq('id', orderId)
-    }
+    await supabase.from('orders').update({ status: newStatus }).eq('id', orderId)
   } catch (err) {
     console.warn('Supabase updateOrderStatus fallback:', err.message)
   }
 
-  // 2. Update local state
   const orders = getOrdersLocal()
-  const idx = orders.findIndex((o) => o.id === orderId)
+  const idx = orders.findIndex((o) => String(o.id) === String(orderId))
   if (idx !== -1) {
     orders[idx].status = newStatus
     localStorage.setItem(ORDERS_KEY, JSON.stringify(orders))
   }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('mornaco_order_changed'))
+  }
+
   return orders
 }
 
 export async function clearAllOrders() {
-  const session = getSession()
-
   try {
-    if (session?.token) {
-      await supabase.rpc('admin_clear_orders', { p_token: session.token })
-    } else {
-      await supabase.from('orders').delete().neq('id', 0)
-    }
+    await supabase.from('orders').delete().neq('id', 0)
   } catch (err) {
     console.warn('Supabase clearAllOrders fallback:', err.message)
   }
 
   localStorage.setItem(ORDERS_KEY, JSON.stringify([]))
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('mornaco_order_changed'))
+  }
   return []
 }
 
