@@ -36,20 +36,32 @@ const DEFAULT_USERS = [
 // Extract default products from local MENU structure
 function extractDefaultProducts() {
   const products = []
-  MENU.forEach((cat) => {
-    cat.sections.forEach((sec) => {
-      sec.items.forEach((item, idx) => {
-        products.push({
-          id: `${cat.id}-${sec.title.toLowerCase().replace(/\s+/g, '-')}-${idx}`,
-          name: item.name,
-          category: cat.label,
-          price: item.price ? item.price / 1000 : 5.0,
-          visible: true,
-          featured: !!item.star,
-        })
+  try {
+    if (Array.isArray(MENU)) {
+      MENU.forEach((cat) => {
+        const categoryLabel = cat.label || 'Autres'
+        if (Array.isArray(cat.sections)) {
+          cat.sections.forEach((sec, sIdx) => {
+            const secSlug = sec.title ? sec.title.toLowerCase().replace(/\s+/g, '-') : `s${sIdx}`
+            if (Array.isArray(sec.items)) {
+              sec.items.forEach((item, idx) => {
+                products.push({
+                  id: `${cat.id || 'cat'}-${secSlug}-${idx}`,
+                  name: item.name + (item.note ? ` (${item.note})` : ''),
+                  category: categoryLabel,
+                  price: item.price ? item.price / 1000 : 5.0,
+                  visible: true,
+                  featured: !!item.star,
+                })
+              })
+            }
+          })
+        }
       })
-    })
-  })
+    }
+  } catch (err) {
+    console.error('Error extracting default products:', err)
+  }
   return products
 }
 
@@ -344,15 +356,19 @@ export async function deleteProduct(id) {
 function getProductsLocal() {
   try {
     const saved = localStorage.getItem(PRODUCTS_KEY)
-    if (!saved) {
-      const def = extractDefaultProducts()
-      localStorage.setItem(PRODUCTS_KEY, JSON.stringify(def))
-      return def
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed
+      }
     }
-    return JSON.parse(saved)
-  } catch {
-    return extractDefaultProducts()
+  } catch (err) {
+    console.warn('Error reading local products:', err)
   }
+
+  const def = extractDefaultProducts()
+  localStorage.setItem(PRODUCTS_KEY, JSON.stringify(def))
+  return def
 }
 
 // ============================================================

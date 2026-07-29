@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { addProduct, deleteProduct, updateProduct } from '../../services/adminService.js'
 
-export default function ProductsModal({ isOpen, onClose, products, onRefresh }) {
+export default function ProductsModal({ isOpen, onClose, products = [], onRefresh }) {
   const [catFilter, setCatFilter] = useState('all')
   const [newProdName, setNewProdName] = useState('')
   const [newProdCat, setNewProdCat] = useState('Cafés')
@@ -9,6 +9,12 @@ export default function ProductsModal({ isOpen, onClose, products, onRefresh }) 
   const [newProdPrice, setNewProdPrice] = useState('')
   const [newProdFeatured, setNewProdFeatured] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+
+  useEffect(() => {
+    if (isOpen && (!products || products.length === 0)) {
+      onRefresh()
+    }
+  }, [isOpen, products, onRefresh])
 
   if (!isOpen) return null
 
