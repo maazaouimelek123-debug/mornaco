@@ -290,69 +290,32 @@ export async function getProducts() {
 }
 
 export async function addProduct(product) {
-  const session = getSession()
-
-  try {
-    if (session?.token) {
-      await supabase.rpc('admin_product_save', {
-        p_token: session.token,
-        p_id: null,
-        p_name: product.name,
-        p_category: product.category,
-        p_price: parseFloat(product.price),
-        p_visible: true,
-        p_featured: !!product.featured,
-        p_photo: null,
-      })
-    } else {
-      await supabase.from('products').insert([
-        {
-          name: product.name,
-          category: product.category,
-          price: parseFloat(product.price),
-          visible: true,
-          featured: !!product.featured,
-        },
-      ])
-    }
-  } catch (err) {
-    console.warn('Supabase addProduct fallback:', err.message)
-  }
-
-  const products = getProductsLocal()
   const newProd = {
-    id: `custom-${Date.now()}`,
+    id: `prod-${Date.now()}`,
     name: product.name,
     category: product.category,
     price: parseFloat(product.price),
     visible: true,
     featured: !!product.featured,
   }
+
+  try {
+    await supabase.from('products').upsert([newProd])
+  } catch (err) {
+    console.warn('Supabase addProduct error:', err.message)
+  }
+
+  const products = getProductsLocal()
   products.push(newProd)
   localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products))
   return products
 }
 
 export async function updateProduct(id, fields) {
-  const session = getSession()
-
   try {
-    if (session?.token) {
-      await supabase.rpc('admin_product_save', {
-        p_token: session.token,
-        p_id: id,
-        p_name: fields.name || null,
-        p_category: fields.category || null,
-        p_price: fields.price !== undefined ? parseFloat(fields.price) : null,
-        p_visible: fields.visible !== undefined ? fields.visible : null,
-        p_featured: fields.featured !== undefined ? fields.featured : null,
-        p_photo: null,
-      })
-    } else {
-      await supabase.from('products').update(fields).eq('id', id)
-    }
+    await supabase.from('products').update(fields).eq('id', id)
   } catch (err) {
-    console.warn('Supabase updateProduct fallback:', err.message)
+    console.warn('Supabase updateProduct error:', err.message)
   }
 
   const products = getProductsLocal()
@@ -365,16 +328,10 @@ export async function updateProduct(id, fields) {
 }
 
 export async function deleteProduct(id) {
-  const session = getSession()
-
   try {
-    if (session?.token) {
-      await supabase.rpc('admin_product_delete', { p_token: session.token, p_id: id })
-    } else {
-      await supabase.from('products').delete().eq('id', id)
-    }
+    await supabase.from('products').delete().eq('id', id)
   } catch (err) {
-    console.warn('Supabase deleteProduct fallback:', err.message)
+    console.warn('Supabase deleteProduct error:', err.message)
   }
 
   const products = getProductsLocal().filter((p) => p.id !== id)
