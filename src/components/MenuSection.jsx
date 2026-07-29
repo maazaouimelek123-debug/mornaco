@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react'
 import { MENU, fmt } from '../data/menu.js'
 import { Monogram } from './Logo.jsx'
 import { Icon } from './Icons.jsx'
+import { useCart } from '../context/CartContext.jsx'
 
 const countItems = (cat) => cat.sections.reduce((n, s) => n + s.items.length, 0)
 
 function Item({ item }) {
+  const { addToCart } = useCart()
+
   return (
     <li className={`menu-item ${item.star ? 'menu-item--star' : ''}`}>
       <span className="menu-item__name">
@@ -19,6 +22,16 @@ function Item({ item }) {
       </span>
       <span className="menu-item__dots" aria-hidden="true" />
       <span className="menu-item__price">{fmt(item.price)}</span>
+      <button
+        className="menu-item__order-btn"
+        title="Ajouter à la commande"
+        onClick={(e) => {
+          e.stopPropagation()
+          addToCart(item)
+        }}
+      >
+        + Commander
+      </button>
     </li>
   )
 }
@@ -91,8 +104,8 @@ export default function MenuSection() {
               </button>
             </div>
             <div className="menu-overlay__body">
-              {cat.sections.map((sec) => (
-                <div className="menu__group" key={sec.title || cat.label}>
+              {cat.sections.map((sec, sIdx) => (
+                <div className="menu__group" key={sec.title || `${cat.id}-${sIdx}`}>
                   {sec.title && <h3 className="bubble-title">{sec.title}</h3>}
                   <ul className="menu__list">
                     {sec.items.map((item, i) => (

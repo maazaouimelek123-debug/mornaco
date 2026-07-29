@@ -7,6 +7,8 @@ import Ambiance from './components/Ambiance.jsx'
 import Contact from './components/Contact.jsx'
 import Footer from './components/Footer.jsx'
 import AdminPage from './components/Admin/AdminPage.jsx'
+import CartDrawer from './components/CartDrawer.jsx'
+import { CartProvider } from './context/CartContext.jsx'
 import { useReveal } from './hooks/useReveal.js'
 
 export default function App() {
@@ -34,7 +36,7 @@ export default function App() {
   }
 
   return (
-    <>
+    <CartProvider>
       <Nav />
       <main>
         <Hero />
@@ -44,6 +46,7 @@ export default function App() {
         <Contact />
       </main>
       <Footer />
-    </>
+      <CartDrawer />
+    </CartProvider>
   )
 }

@@ -1,7 +1,10 @@
 import { SIGNATURES, fmt } from '../data/menu.js'
 import { Icon } from './Icons.jsx'
+import { useCart } from '../context/CartContext.jsx'
 
 export default function Signatures() {
+  const { addToCart } = useCart()
+
   return (
     <section className="signatures" id="signatures">
       <div className="section-head reveal">
@@ -19,9 +22,17 @@ export default function Signatures() {
             <span className="sig-card__cat">{s.cat}</span>
             <h3>{s.name}</h3>
             <p>{s.desc}</p>
-            <span className="sig-card__price">
-              {fmt(s.price)} <small>DT</small>
-            </span>
+            <div className="sig-card__footer">
+              <span className="sig-card__price">
+                {fmt(s.price)} <small>DT</small>
+              </span>
+              <button
+                className="sig-card__order-btn"
+                onClick={() => addToCart({ name: s.name, price: s.price })}
+              >
+                + Commander
+              </button>
+            </div>
           </article>
         ))}
       </div>

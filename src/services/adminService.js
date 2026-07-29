@@ -180,6 +180,35 @@ export function subscribeOrders(onUpdate) {
   }
 }
 
+export async function createOrder(orderData) {
+  const newOrder = {
+    id: orderData.id || Date.now(),
+    ref: orderData.ref || `#MNC-${Math.floor(1000 + Math.random() * 9000)}`,
+    date: orderData.date || new Date().toLocaleDateString('fr-FR'),
+    time:
+      orderData.time ||
+      new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+    status: 'en attente',
+    verified: true,
+    total: parseFloat(orderData.total || 0),
+    items: orderData.items || [],
+  }
+
+  try {
+    const { error } = await supabase.from('orders').insert([newOrder])
+    if (error) {
+      console.warn('Supabase insert order error:', error.message)
+    }
+  } catch (err) {
+    console.warn('Supabase insert order fallback:', err.message)
+  }
+
+  const orders = getOrdersLocal()
+  orders.unshift(newOrder)
+  localStorage.setItem(ORDERS_KEY, JSON.stringify(orders))
+  return newOrder
+}
+
 export async function updateOrderStatus(orderId, newStatus) {
   const session = getSession()
 
