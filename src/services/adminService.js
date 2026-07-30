@@ -429,16 +429,15 @@ function getProductsLocal() {
 // USERS MANAGEMENT (SUPERADMIN - SUPABASE + LOCAL FALLBACK)
 // ============================================================
 export async function getUsers() {
-  const session = getSession()
   try {
-    if (session?.id) {
-      const { data, error } = await supabase.rpc('admin_list_users', {
-        p_requester_id: session.id,
-      })
-      if (!error && Array.isArray(data) && data.length > 0) {
-        localStorage.setItem(USERS_KEY, JSON.stringify(data))
-        return data
-      }
+    const { data, error } = await supabase
+      .from('admin_users')
+      .select('id, username, display_name, role, created_at')
+      .order('created_at', { ascending: true })
+
+    if (!error && Array.isArray(data) && data.length > 0) {
+      localStorage.setItem(USERS_KEY, JSON.stringify(data))
+      return data
     }
   } catch (err) {
     console.warn('Supabase getUsers fallback:', err.message)
@@ -448,54 +447,46 @@ export async function getUsers() {
 }
 
 export async function addUser(username, password, role) {
-  const session = getSession()
   const passHash = await sha256(password)
+  const newUser = {
+    username,
+    hash: passHash,
+    display_name: username,
+    role: role || 'admin',
+  }
 
   try {
-    if (session?.id) {
-      const { data, error } = await supabase.rpc('admin_create_user', {
-        p_username: username,
-        p_hash: passHash,
-        p_display_name: username,
-        p_role: role || 'admin',
-        p_requester_id: session.id,
-      })
-      if (error || (data && data.error)) {
-        throw new Error((data && data.error) || (error && error.message))
-      }
+    const { data, error } = await supabase.from('admin_users').insert([newUser]).select()
+    if (!error && data && data.length > 0) {
+      return await getUsers()
     }
   } catch (err) {
-    console.warn('Supabase addUser fallback:', err.message)
+    console.warn('Supabase addUser error:', err.message)
   }
 
   const users = getUsersLocal()
   if (users.some((u) => u.username.toLowerCase() === username.toLowerCase())) {
     throw new Error('Cet utilisateur existe déjà')
   }
-  const newUser = {
+
+  const localUser = {
     id: `u-${Date.now()}`,
     username,
     display_name: username,
     role: role || 'admin',
     created_at: new Date().toISOString(),
   }
-  users.push(newUser)
+
+  users.push(localUser)
   localStorage.setItem(USERS_KEY, JSON.stringify(users))
   return users
 }
 
 export async function deleteUser(userId) {
-  const session = getSession()
-
   try {
-    if (session?.id) {
-      await supabase.rpc('admin_delete_user', {
-        p_target_id: userId,
-        p_requester_id: session.id,
-      })
-    }
+    await supabase.from('admin_users').delete().eq('id', userId)
   } catch (err) {
-    console.warn('Supabase deleteUser fallback:', err.message)
+    console.warn('Supabase deleteUser error:', err.message)
   }
 
   const users = getUsersLocal().filter((u) => u.id !== userId)

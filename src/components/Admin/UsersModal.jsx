@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { addUser, deleteUser, getUsers } from '../../services/adminService.js'
 
 export default function UsersModal({ isOpen, onClose, currentUser }) {
@@ -6,11 +6,27 @@ export default function UsersModal({ isOpen, onClose, currentUser }) {
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('admin')
   const [errorMsg, setErrorMsg] = useState('')
-  const [usersList, setUsersList] = useState(getUsers())
+  const [usersList, setUsersList] = useState([])
+
+  const loadUsers = async () => {
+    try {
+      const list = await getUsers()
+      setUsersList(Array.isArray(list) ? list : [])
+    } catch (err) {
+      console.warn('Error loading users:', err)
+      setUsersList([])
+    }
+  }
+
+  useEffect(() => {
+    if (isOpen) {
+      loadUsers()
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
-  const handleAddUser = (e) => {
+  const handleAddUser = async (e) => {
     e.preventDefault()
     setErrorMsg('')
     const u = username.trim()
@@ -26,8 +42,8 @@ export default function UsersModal({ isOpen, onClose, currentUser }) {
     }
 
     try {
-      const updated = addUser(u, p, role)
-      setUsersList(updated)
+      const updated = await addUser(u, p, role)
+      setUsersList(Array.isArray(updated) ? updated : [])
       setUsername('')
       setPassword('')
       setRole('admin')
@@ -36,10 +52,10 @@ export default function UsersModal({ isOpen, onClose, currentUser }) {
     }
   }
 
-  const handleDeleteUser = (userId) => {
+  const handleDeleteUser = async (userId) => {
     if (confirm('Retirer cet utilisateur admin ?')) {
-      const updated = deleteUser(userId)
-      setUsersList(updated)
+      const updated = await deleteUser(userId)
+      setUsersList(Array.isArray(updated) ? updated : [])
     }
   }
 
